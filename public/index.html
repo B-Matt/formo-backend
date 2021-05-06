@@ -9,6 +9,7 @@
 	<link href="https://unpkg.com/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
 	<link rel="shortcut icon" type="image/png" href="https://moleculer.services/icon/favicon-16x16.png"/>
 	<script src="https://unpkg.com/vue@2.6.11/dist/vue.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/lodash@4.17.21/lodash.min.js"></script>
 	<style type="text/css">
 	html {
 		font-family: "Source Sans Pro", Helvetica, Arial, sans-serif;
@@ -518,8 +519,6 @@
 				return {
 					menu: [
 						{ id: "home", caption: "Home" },
-						{ id: "greeter", caption: "Greeter service" },
-						{ id: "products", caption: "Products service" },
 						{ id: "user", caption: "User service" },
 						{ id: "nodes", caption: "Nodes" },
 						{ id: "services", caption: "Services" }
@@ -527,64 +526,60 @@
 					page: "home",
 
 					requests: {
-						greeter: [
-							{ id: "hello", action: "greeter.hello", rest: "/api/greeter/hello", response: null, status: null, duration: null },
-
-							{ id: "testing", action: "greeter.testing", rest: "/api/greeter/testing", response: null, method:"GET", status: null, duration: null },
-
-							{ id: "welcome", action: "greeter.welcome", rest: "/api/greeter/welcome", fields: [
-								{ field: "name", label: "Name", type: "text", paramType: "param", model: "welcomeName" }
-							], response: null, status: null, duration: null }
-						],
-						products: [
-							{ id: "list", action: "products.list", rest: "/api/products/", response: null, status: null, duration: null, afterResponse: response => !this.fields.productID && (this.fields.productID = response.rows[0]._id) },
-
-							{ id: "create", action: "products.create", rest: "/api/products/", method: "POST", fields: [
-								{ field: "name", label: "Name", type: "text", paramType: "body", model: "productName" },
-								{ field: "price", label: "Price", type: "number", paramType: "body", model: "productPrice" },
-							], response: null, status: null, duration: null, afterResponse: response => this.fields.productID = response._id  },
-
-							{ id: "get", action: "products.get", rest: "/api/products/:id", method: "GET", fields: [
-								{ field: "id", label: "ID", type: "text", paramType: "url", model: "productID" }
-							], response: null, status: null, duration: null },
-
-							{ id: "update", action: "products.update", rest: "/api/products/:id", method: "PUT", fields: [
-								{ field: "id", label: "ID", type: "text", paramType: "url", model: "productID" },
-								{ field: "name", label: "Name", type: "text", paramType: "body", model: "productName" },
-								{ field: "price", label: "Price", type: "number", paramType: "body", model: "productPrice" },
-							], response: null, status: null, duration: null },
-
-							{ id: "increase", action: "products.increaseQuantity", rest: "/api/products/:id/quantity/increase", method: "PUT", fields: [
-								{ field: "id", label: "ID", type: "text", paramType: "url", model: "productID" },
-								{ field: "value", label: "Value", type: "number", paramType: "body", model: "productValue" },
-							], response: null, status: null, duration: null },
-
-							{ id: "decrease", action: "products.decreaseQuantity", rest: "/api/products/:id/quantity/decrease", method: "PUT", fields: [
-								{ field: "id", label: "ID", type: "text", paramType: "url", model: "productID" },
-								{ field: "value", label: "Value", type: "number", paramType: "body", model: "productValue" },
-							], response: null, status: null, duration: null },
-
-							{ id: "delete", action: "products.delete", rest: "/api/products/:id", method: "DELETE", fields: [
-								{ field: "id", label: "ID", type: "text", paramType: "url", model: "productID" }
-							], response: null, status: null, duration: null },
-
-						],
 						user: [
-							{ id: "login", action: "user.login", rest: "/api/user/login", method: "POST", fields: [
-								{ field: "username", label: "Username", type: "text", paramType: "param", model: "userName" },
-								{ field: "password", label: "Password", type: "password", paramType: "param", model: "userPassword" }
-							], response: null, status: null, duration: null }
+							{ id: "create", action: "user.create", rest: "/api/user/", method: "POST", object: "user", fields: [
+								{ field: "name", label: "Name", type: "string", paramType: "body", model: "userRegName" },
+								{ field: "email", label: "E-Mail", type: "email", paramType: "body", model: "userRegEmail" },
+								{ field: "password", label: "Password", type: "password", paramType: "body", model: "userRegPass" },
+								{ field: "settings", label: "", type: "hidden", paramType: "body", model: "userRegSettings" }
+							], response: null, status: null, duration: null },
+							{ id: "login", action: "user.login", rest: "/api/user/login", method: "POST", object: "user", fields: [
+								{ field: "email", label: "E-Mail", type: "email", paramType: "body", model: "userLoginEmail" },
+								{ field: "password", label: "Password", type: "password", paramType: "body", model: "userLoginPass" }
+							], response: null, status: null, duration: null },
+							{ id: "me", action: "user.me", rest: "/api/user/", method: "GET", fields: [
+								{ field: "jwt", label: "Token", type: "string", paramType: "auth", model: "authToken" }
+							], response: null, status: null, duration: null },
+							{ id: "update", action: "user.update", rest: "/api/user/", method: "PATCH", object: "user", fields: [
+								{ field: "name", label: "Name", type: "string", paramType: "body", model: "userEditName" },
+								{ field: "email", label: "E-Mail", type: "email", paramType: "body", model: "userEditEmail" },
+								{ field: "password", label: "Password", type: "password", paramType: "body", model: "userEditPass" },
+								{ field: "sex", label: "Sex", type: "string", paramType: "body", model: "userEditSex" },
+								{ field: "jwt", label: "Token", type: "string", paramType: "auth", model: "authToken" }
+							], response: null, status: null, duration: null },
+							{ id: "list", action: "user.list", rest: "/api/user/", method: "GET", response: null, status: null, duration: null },
+							{ id: "get", action: "user.get", rest: "/api/user/:id", method: "GET", fields: [
+								{ field: "id", label: "User ID", type: "string", paramType: "url", model: "userId" },
+								{ field: "jwt", label: "Token", type: "string", paramType: "auth", model: "authToken" }
+							], response: null, status: null, duration: null },
+							{ id: "remove", action: "user.remove", rest: "/api/user/:id", method: "DELETE", fields: [
+								{ field: "id", label: "User ID", type: "string", paramType: "url", model: "userId" },
+								{ field: "jwt", label: "Token", type: "string", paramType: "auth", model: "authToken" }
+							], response: null, status: null, duration: null },
 						]
 					},
 
 					fields: {
-						welcomeName: "John",
-						productID: null,
-						productName: "Xiamoi Mi 9T",
-						productPrice: 299,
-						productValue: 1,
-						userName: "admin",
-						userPassword: "admin"
+						authToken: "",
+
+						// [USER SERVICE]
+						userId: "",
+
+						// User Registration
+						userRegName: "Testing Test",
+						userRegEmail: "testing@example.com",
+						userRegPass: "testing123",
+						userRegSettings: [],
+
+						// User Login
+						userLoginEmail: "testing@example.com",
+						userLoginPass: "testing123",
+
+						// User Edit
+						userEditName: "Pero Perić",
+						userEditEmail: "testing@example.com",
+						userEditPass: "testing123",
+						userEditSex: "female",
 					},
 
 					broker: null,
@@ -664,6 +659,9 @@
 					const method = item.method || "GET";
 					let body = null;
 					let params = null;
+					let object = {};
+					let token = "";
+
 					if (item.fields) {
 						body = {};
 						params = {};
@@ -675,6 +673,8 @@
 								params[field.field] = value;
 							else if (field.paramType == "url")
 								url = url.replace(":" + field.field, value);
+							else if (field.paramType == "auth")
+								token = value
 						});
 
 						if (body && method == "GET") {
@@ -683,17 +683,23 @@
 						if (params) {
 							url += "?" + new URLSearchParams(params).toString();
 						}
+
+						if(body && item.object) {
+							object[item.object] = body;
+						}
 					}
 
 					return fetch(url, {
 						method,
-						body: body ? JSON.stringify(body) : null,
+						body: object && !_.isEmpty(object) ? JSON.stringify(object) : body ? JSON.stringify(body) : null,
 					    headers: {
-							'Content-Type': 'application/json'
+							'Content-Type': 'application/json',
+							'Authorization': `Bearer ${token}`
 						}
 						}).then(function(res) {
 							item.status = res.status;
 							item.duration = Date.now() - startTime;
+
 							return res.json().then(json => {
 								item.response = json;
 								if (item.afterResponse)

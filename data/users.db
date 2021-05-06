@@ -1,0 +1,3 @@
+{"name":"Testing Test","email":"testing@example.com","password":"$2a$10$ietLCvWtgO2Y79lypRHUxuJ7gv7R.2Kd94M0Hhnh0xilyUOLOPh5u","settings":[],"sex":"male","organisation":null,"tasks":[],"projects":[],"_id":"WQ1PS7bKCbSjB696"}
+{"name":"Pero Perić","email":"testing@example.com","password":"$2a$10$ilDWJeENv.meWWTZbzFlDuAMVDY2wz5kBrS/JVv2seryfMSBTbIDG","settings":[],"sex":"female","organisation":null,"tasks":[],"projects":[],"_id":"WQ1PS7bKCbSjB696","updatedAt":{"$$date":1620292917259}}
+{"name":"Petar Horvat","email":"testera@example.com","password":"$2a$10$P09BsgyCVR7YdOexpaL62eP7vJNINf/1Bc2PwY/sx9XYdlxgJbwU6","settings":[],"sex":"male","organisation":null,"tasks":[],"projects":[],"_id":"kvII8AKo7AAZvPtl"}
