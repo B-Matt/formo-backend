@@ -520,6 +520,7 @@
 					menu: [
 						{ id: "home", caption: "Home" },
 						{ id: "user", caption: "User service" },
+						{ id: "orgs", caption: "Organisations service" },
 						{ id: "nodes", caption: "Nodes" },
 						{ id: "services", caption: "Services" }
 					],
@@ -556,6 +557,26 @@
 								{ field: "id", label: "User ID", type: "string", paramType: "url", model: "userId" },
 								{ field: "jwt", label: "Token", type: "string", paramType: "auth", model: "authToken" }
 							], response: null, status: null, duration: null },
+						],
+						orgs: [
+							{ id: "create", action: "orgs.create", rest: "/api/organisations/", method: "POST", object: "organisation", fields: [
+								{ field: "name", label: "Name", type: "string", paramType: "body", model: "orgsCreateName" },
+								{ field: "jwt", label: "Token", type: "string", paramType: "auth", model: "authToken" }
+							], response: null, status: null, duration: null },
+							{ id: "update", action: "orgs.update", rest: "/api/organisations/:id", method: "PATCH", object: "organisation", fields: [
+								{ field: "id", label: "Organisation ID", type: "string", paramType: "url", model: "orgId" },
+								{ field: "name", label: "Name", type: "string", paramType: "body", model: "orgsEditName" },
+								{ field: "jwt", label: "Token", type: "string", paramType: "auth", model: "authToken" }
+							], response: null, status: null, duration: null },
+							{ id: "list", action: "orgs.list", rest: "/api/organisations/", method: "GET", response: null, status: null, duration: null },
+							{ id: "get", action: "orgs.get", rest: "/api/organisations/:id", method: "GET", fields: [
+								{ field: "id", label: "Organisation ID", type: "string", paramType: "url", model: "orgRemoveId" },
+								{ field: "jwt", label: "Token", type: "string", paramType: "auth", model: "authToken" }
+							], response: null, status: null, duration: null },
+							{ id: "remove", action: "orgs.remove", rest: "/api/organisations/:id", method: "DELETE", fields: [
+								{ field: "id", label: "Organisation ID", type: "string", paramType: "url", model: "orgRemoveId" },
+								{ field: "jwt", label: "Token", type: "string", paramType: "auth", model: "authToken" }
+							], response: null, status: null, duration: null },
 						]
 					},
 
@@ -580,6 +601,18 @@
 						userEditEmail: "testing@example.com",
 						userEditPass: "testing123",
 						userEditSex: "female",
+
+						// [ORGANISATIONS SERVICE]
+						// Organisation Create
+						orgsCreateName: "FERIT",
+
+						// Organisation Edit
+						orgId: "",
+						orgsEditName: "Undefined",
+
+						// Organisation Remove
+						orgRemoveId: "",
+
 					},
 
 					broker: null,
