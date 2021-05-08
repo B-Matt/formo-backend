@@ -521,6 +521,7 @@
 						{ id: "home", caption: "Home" },
 						{ id: "user", caption: "User service" },
 						{ id: "orgs", caption: "Organisations service" },
+						{ id: "projects", caption: "Projects service" },
 						{ id: "nodes", caption: "Nodes" },
 						{ id: "services", caption: "Services" }
 					],
@@ -577,7 +578,27 @@
 								{ field: "id", label: "Organisation ID", type: "string", paramType: "url", model: "orgRemoveId" },
 								{ field: "jwt", label: "Token", type: "string", paramType: "auth", model: "authToken" }
 							], response: null, status: null, duration: null },
-						]
+						],
+						projects: [
+							{ id: "create", action: "projects.create", rest: "/api/projects/", method: "POST", object: "project", fields: [
+								{ field: "name", label: "Name", type: "string", paramType: "body", model: "projCreateName" },
+								{ field: "jwt", label: "Token", type: "string", paramType: "auth", model: "authToken" }
+							], response: null, status: null, duration: null },
+							{ id: "update", action: "projects.update", rest: "/api/projects/:id", method: "PATCH", object: "project", fields: [
+								{ field: "id", label: "Project ID", type: "string", paramType: "url", model: "projId" },
+								{ field: "name", label: "Name", type: "string", paramType: "body", model: "projEditName" },
+								{ field: "jwt", label: "Token", type: "string", paramType: "auth", model: "authToken" }
+							], response: null, status: null, duration: null },
+							{ id: "list", action: "projects.list", rest: "/api/projects/", method: "GET", response: null, status: null, duration: null },
+							{ id: "get", action: "projects.get", rest: "/api/projects/:id", method: "GET", fields: [
+								{ field: "id", label: "Project ID", type: "string", paramType: "url", model: "projGetId" },
+								{ field: "jwt", label: "Token", type: "string", paramType: "auth", model: "authToken" }
+							], response: null, status: null, duration: null },
+							{ id: "remove", action: "projects.remove", rest: "/api/projects/:id", method: "DELETE", fields: [
+								{ field: "id", label: "Project ID", type: "string", paramType: "url", model: "projRemoveId" },
+								{ field: "jwt", label: "Token", type: "string", paramType: "auth", model: "authToken" }
+							], response: null, status: null, duration: null },
+						],
 					},
 
 					fields: {
@@ -612,6 +633,20 @@
 
 						// Organisation Remove
 						orgRemoveId: "",
+
+						// [PROJECTS SERVICE]
+						// Project Create
+						projCreateName: "Testing",
+
+						// Project Edit
+						projId: "",
+						projEditName: "Testiranje",
+
+						// Project Get (Per ID)
+						projGetId: "",
+
+						// Project Remove (Per ID)
+						projRemoveId: "",
 
 					},
 
