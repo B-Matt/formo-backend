@@ -9,34 +9,32 @@ const CacheCleanerMixin = require("../mixins/cache.cleaner.mixin");
  */
 
 module.exports = {
-	name: "projects",
-	mixins: [
-		DbService("projects"),
-		CacheCleanerMixin(["cache.clean.projects"]),
-	],
+	name: "tasks",
+	mixins: [DbService("tasks"), CacheCleanerMixin(["cache.clean.tasks"])],
 
 	/**
 	 * Settings
 	 */
 	settings: {
-		// TODO: Pogledati populates i to staviti pod organisation i tasks
 		rest: "/",
 		fields: [
 			"_id",
 			"name",
-			"organisation",
-			"privacy",
-			"budget",
-			"members",
-			"tasks",
+			"description",
+			"assignee",
+			"dueDate",
+			"project",
+			"priority",
+			"createdAt", 
+			"updatedAt"
 		],
 		entityValidator: {
 			name: { type: "string", min: 2 },
-			organisation: { type: "number" },
-			privacy: { type: "object" },
-			budget: { type: "number", optional: true },
-			members: { type: "array", items: "number", optional: true },
-			tasks: { type: "array", items: "number", optional: true },
+			description: { type: "number" },
+			assignee: { type: "object" },
+			dueDate: { type: "date", optional: true },
+			project: { type: "number" },
+			priority: { type: "object", optional: true },
 		},
 	},
 
@@ -50,48 +48,39 @@ module.exports = {
 	 */
 	actions: {
 		/**
-		 * Creates a new project.
+		 * Creates a new task.
 		 * Auth is required!
 		 *
 		 * @actions
-		 * @param {Object} project - Project entity
+		 * @param {Object} task - Task entity
 		 *
-		 * @returns {Object} Created project
+		 * @returns {Object} Created task
 		 */
 		create: {
-			rest: "POST /projects",
+			rest: "POST /tasks",
 			auth: "required",
 			params: {
-				project: {
+				task: {
 					type: "object",
 					props: {
-						name: { type: "string", min: 1 },
-						organisation: { type: "number" },
-						privacy: { type: "object" },
-						budget: { type: "number" },
-						members: {
-							type: "array",
-							items: "number",
-							optional: true,
-						},
-						tasks: {
-							type: "array",
-							items: "number",
-							optional: true,
-						},
+						name: { type: "string", min: 2 },
+						description: { type: "number" },
+						assignee: { type: "object" },
+						dueDate: { type: "date", optional: true },
+						project: { type: "number" },
+						priority: { type: "object", optional: true },
 					},
 				},
 			},
 			async handler(ctx) {
-				const entity = ctx.params.project;
+				const entity = ctx.params.task;
 				await this.validateEntity(entity);
 
 				entity.name = entity.name || "";
-				entity.organisation = entity.organisation || -1;
-				entity.privacy = entity.privacy || null;
-				entity.budget = entity.budget || 0;
-				entity.members = entity.members || [];
-				entity.tasks = entity.tasks || [];
+				entity.assignee = entity.assignee || -1;
+				entity.dueDate = entity.dueDate || null;
+				entity.project = entity.project || null;
+				entity.priority = entity.priority || null;
 				entity.createdAt = new Date();
 				entity.updatedAt = new Date();
 
@@ -108,42 +97,34 @@ module.exports = {
 		 * Auth is required!
 		 *
 		 * @actions
-		 * @param {String} id - Project ID
-		 * @param {Object} project - Project entity
+		 * @param {String} id - Task ID
+		 * @param {Object} task - Task entity
 		 *
-		 * @returns {Object} Updated project
+		 * @returns {Object} Updated task
 		 */
 		update: {
-			rest: "PATCH /projects/:id",
+			rest: "PATCH /tasks/:id",
 			auth: "required",
 			params: {
 				id: { type: "string" },
-				project: {
+				task: {
 					type: "object",
 					props: {
-						name: { type: "string", min: 1 },
-						organisation: { type: "number" },
-						privacy: { type: "object" },
-						budget: { type: "number" },
-						members: {
-							type: "array",
-							items: "number",
-							optional: true,
-						},
-						tasks: {
-							type: "array",
-							items: "number",
-							optional: true,
-						},
+						name: { type: "string", min: 2 },
+						description: { type: "number" },
+						assignee: { type: "object" },
+						dueDate: { type: "date", optional: true },
+						project: { type: "number" },
+						priority: { type: "object", optional: true },
 					},
 				},
 			},
 			async handler(ctx) {
-				const newData = ctx.params.project;
+				const newData = ctx.params.task;
 				newData.updatedAt = new Date();
 
-				const proj = await this.adapter.findOne({ _id: ctx.params.id });
-				if (!proj) throw new MoleculerClientError("Project not found!", 404);
+				const task = await this.adapter.findOne({ _id: ctx.params.id });
+				if (!task) throw new MoleculerClientError("Task not found!", 404);
 
 				const doc = await this.adapter.updateById(ctx.params.id, { $set: newData });
 				const entity = await this.transformDocuments(ctx, {}, doc);
@@ -154,25 +135,25 @@ module.exports = {
 		},
 
 		/**
-		 * Returns Project entity from DB by provided ID.
+		 * Returns Task entity from DB by provided ID.
 		 */
 		get: {
-			rest: "GET /projects/:id",
+			rest: "GET /tasks/:id",
 			auth: "required",
 		},
 
 		/**
-		 * Returns list of Project entities inside DB.
+		 * Returns list of Task entities inside DB.
 		 */
 		list: {
-			rest: "GET /projects",
+			rest: "GET /tasks",
 		},
 
 		/**
-		 * Removes Project entity from DB based on provided entity ID.
+		 * Removes Task entity from DB based on provided entity ID.
 		 */
 		remove: {
-			rest: "DELETE /projects/:id",
+			rest: "DELETE /tasks/:id",
 			auth: "required",
 		},
 	},
