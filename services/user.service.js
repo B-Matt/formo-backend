@@ -1,5 +1,7 @@
 "use strict";
 
+// TODO: Dodati upload profilne slike usera kao file!! (To multithreadat)
+
 const jwt = require("jsonwebtoken");
 const { MoleculerClientError } = require("moleculer").Errors;
 const bcrypt = require("bcryptjs");
@@ -122,29 +124,6 @@ module.exports = {
 		},
 
 		/**
-		 * Get current user entity.
-		 * Auth is required!
-		 *
-		 * @actions
-		 *
-		 * @returns {Object} User entity
-		 */
-		me: {
-			auth: "required",
-			rest: "GET /user",
-			cache: {
-				keys: ["#userID"]
-			},
-			async handler(ctx) {
-				const user = await this.getById(ctx.meta.user._id);
-				if (!user) throw new MoleculerClientError("User not found!", 400);
-
-				const doc = await this.transformDocuments(ctx, {}, user);
-				return await this.transformEntity(doc, true, ctx.meta.token);
-			}
-		},
-
-		/**
 		 * Updates User entity.
 		 * Auth is required!
 		 *
@@ -205,6 +184,22 @@ module.exports = {
 		get: {
 			rest: "GET /user/:id",
 			auth: "required"
+		},
+
+		/**
+		 * Returns Users that are inside provided organisation.
+		 */
+		getbyOrg: {
+			rest: "GET /user/org/:org",
+			params: {
+				org: { type: "string" },
+			},
+			auth: "required",
+			async handler(ctx) {
+				const users = await this.adapter.find({ query: { organisation: ctx.params.org } });
+				if (!users) throw new MoleculerClientError("Users with provided organisation ID not found!", 404);
+				return users;
+			},
 		},
 
 		/**

@@ -540,9 +540,6 @@
 								{ field: "email", label: "E-Mail", type: "email", paramType: "body", model: "userLoginEmail" },
 								{ field: "password", label: "Password", type: "password", paramType: "body", model: "userLoginPass" }
 							], response: null, status: null, duration: null },
-							{ id: "me", action: "user.me", rest: "/api/user/", method: "GET", fields: [
-								{ field: "jwt", label: "Token", type: "string", paramType: "auth", model: "authToken" }
-							], response: null, status: null, duration: null },
 							{ id: "update", action: "user.update", rest: "/api/user/", method: "PATCH", object: "user", fields: [
 								{ field: "name", label: "Name", type: "string", paramType: "body", model: "userEditName" },
 								{ field: "email", label: "E-Mail", type: "email", paramType: "body", model: "userEditEmail" },
@@ -553,6 +550,10 @@
 							{ id: "list", action: "user.list", rest: "/api/user/", method: "GET", response: null, status: null, duration: null },
 							{ id: "get", action: "user.get", rest: "/api/user/:id", method: "GET", fields: [
 								{ field: "id", label: "User ID", type: "string", paramType: "url", model: "userId" },
+								{ field: "jwt", label: "Token", type: "string", paramType: "auth", model: "authToken" }
+							], response: null, status: null, duration: null },
+							{ id: "getByOrg", action: "user.getByOrg", rest: "/api/user/org/:org", method: "GET", fields: [
+								{ field: "org", label: "Organisation ID", type: "string", paramType: "url", model: "organisationId" },
 								{ field: "jwt", label: "Token", type: "string", paramType: "auth", model: "authToken" }
 							], response: null, status: null, duration: null },
 							{ id: "remove", action: "user.remove", rest: "/api/user/:id", method: "DELETE", fields: [
@@ -643,6 +644,7 @@
 						userEditEmail: "testing@example.com",
 						userEditPass: "testing123",
 						userEditSex: "female",
+						organisationId: "b09XeORnoCdBImSX",
 
 						// [ORGANISATIONS SERVICE]
 						// Organisation Create

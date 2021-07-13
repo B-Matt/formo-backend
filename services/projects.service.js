@@ -25,7 +25,6 @@ module.exports = {
 			"_id",
 			"name",
 			"organisation",
-			"privacy",
 			"budget",
 			"members",
 			"tasks",
@@ -33,7 +32,6 @@ module.exports = {
 		entityValidator: {
 			name: { type: "string", min: 2 },
 			organisation: { type: "number" },
-			privacy: { type: "object" },
 			budget: { type: "number", optional: true },
 			members: { type: "array", items: "number", optional: true },
 			tasks: { type: "array", items: "number", optional: true },
@@ -67,7 +65,6 @@ module.exports = {
 					props: {
 						name: { type: "string", min: 1 },
 						organisation: { type: "number" },
-						privacy: { type: "object" },
 						budget: { type: "number" },
 						members: {
 							type: "array",
@@ -88,7 +85,6 @@ module.exports = {
 
 				entity.name = entity.name || "";
 				entity.organisation = entity.organisation || -1;
-				entity.privacy = entity.privacy || null;
 				entity.budget = entity.budget || 0;
 				entity.members = entity.members || [];
 				entity.tasks = entity.tasks || [];
@@ -123,7 +119,6 @@ module.exports = {
 					props: {
 						name: { type: "string", min: 1 },
 						organisation: { type: "number" },
-						privacy: { type: "object" },
 						budget: { type: "number" },
 						members: {
 							type: "array",
