@@ -98,11 +98,6 @@ module.exports = {
 				const user = ctx.params.user;
 				await this.validateEntity(user);
 
-				if(user.name) {
-					const isNameExists = await this.adapter.findOne({ name: user.name });
-					if(isNameExists) throw new MoleculerClientError("User with that name already exists!", 422);
-				}
-
 				if(user.email) {
 					const isEmailExists = await this.adapter.findOne({ email: user.email });
 					if(isEmailExists) throw new MoleculerClientError("User with that e-mail already exists!", 422);
@@ -250,7 +245,7 @@ module.exports = {
 		generateJWT(user) {
 			const today = new Date();
 			const exp = new Date(today);
-			exp.setDate(today.getDate() + 60);
+			exp.setDate(today.getDate() + 1);
 
 			return jwt.sign({
 				id: user._id,
