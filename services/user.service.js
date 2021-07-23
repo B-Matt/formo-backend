@@ -17,9 +17,7 @@ module.exports = {
 	name: "user",
 	mixins: [
 		DbService("users"),
-		CacheCleanerMixin([
-			"cache.clean.users"
-		])
+		CacheCleanerMixin([ "cache.clean.users" ])
 	],
 
 	/**
@@ -34,17 +32,25 @@ module.exports = {
 			password: { type: "string", min: 6 },
 			email: { type: "email" },
 			sex: { type: "string", optional: true },
-			organisation: { type: "object", optional: true },
-			tasks: { type: "array", items: "object", optional: true },
-			projects: { type: "array", items: "object", optional: true },
+			organisation: { type: "string", optional: true },
+			tasks: { type: "array", items: "string", optional: true },
+			projects: { type: "array", items: "string", optional: true },
 			settings: { type: "array", items: "object" }
+		},
+		populates: {
+			"organisation": {
+				action: "organisations.get",
+				params: {
+					fields: ["_id", "name", "address", "city", "country"]
+				}
+			}
 		}
 	},
 
 	/**
 	 * Dependencies
 	 */
-	dependencies: [],
+	dependencies: ["organisations"],
 
 	/**
 	 * Actions
@@ -82,6 +88,32 @@ module.exports = {
 		},
 
 		/**
+		 * Registers a new admin user.
+		 *
+		 * @actions
+		 * @param {Object} user - User entity
+		 *
+		 * @returns {Object} Created entity & token
+		 */
+		createAdmin: {
+			//auth: "required",
+			rest: "POST /user/first",
+			params: {
+				user: { type: "object" },
+				org: { type: "object" },
+			},
+			async handler(ctx) {
+				const newOrg = await ctx.call("organisations.create", { organisation: ctx.params.org, throwIfNotExist: true })
+				const user = ctx.params.user;
+				user.organisation = newOrg._id.toString();
+				const newUser = await this.broker.call("user.create", { user: user, populate: ["organisation"] });
+				//const fullUser = this.broker.call("user.get", { id: newUser._id, populate: ["organisation"] });
+				// TODO: Dodati da ovaj populate radi...
+				return newUser;
+			}
+		},
+
+		/**
 		 * Registers a new user.
 		 *
 		 * @actions
@@ -105,6 +137,7 @@ module.exports = {
 
 				user.password = bcrypt.hashSync(user.password, 10);
 				user.sex = user.sex || "male";
+				console.log('aa', user.organisation)
 				user.organisation = user.organisation || null;
 				user.tasks = user.tasks || [];
 				user.projects = user.projects || [];

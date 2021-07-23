@@ -536,6 +536,12 @@
 								{ field: "password", label: "Password", type: "password", paramType: "body", model: "userRegPass" },
 								{ field: "settings", label: "", type: "hidden", paramType: "body", model: "userRegSettings" }
 							], response: null, status: null, duration: null },
+							{ id: "createAdmin", action: "user.createAdmin", rest: "/api/user/first", method: "POST", object: "user", fields: [
+								{ field: "name", label: "Name", type: "string", paramType: "body", model: "userRegName" },
+								{ field: "email", label: "E-Mail", type: "email", paramType: "body", model: "userRegEmail" },
+								{ field: "password", label: "Password", type: "password", paramType: "body", model: "userRegPass" },
+								{ field: "settings", label: "", type: "hidden", paramType: "body", model: "userRegSettings" }
+							], response: null, status: null, duration: null },
 							{ id: "login", action: "user.login", rest: "/api/user/login", method: "POST", object: "user", fields: [
 								{ field: "email", label: "E-Mail", type: "email", paramType: "body", model: "userLoginEmail" },
 								{ field: "password", label: "Password", type: "password", paramType: "body", model: "userLoginPass" }

@@ -22,9 +22,12 @@ module.exports = {
 	 */
 	settings: {
 		rest: "/",
-		fields: ["_id", "name", "admins", "employees", "projects", "createdAt", "updatedAt"],
+		fields: ["_id", "name", "address", "city", "country", "admins", "employees", "projects", "createdAt", "updatedAt"],
 		entityValidator: {
 			name: { type: "string", min: 2 },
+			address: { type: "string", min: 2 },
+			city: { type: "string", min: 2 },
+			country: { type: "string", min: 2 },
 			admins: { type: "array", items: "number", optional: true },
 			employees: { type: "array", items: "number", optional: true },
 			projects: { type: "array", items: "number", optional: true },
@@ -55,6 +58,9 @@ module.exports = {
 			params: {
 				organisation: { type: "object", props: {
 					name: { type: "string", min: 2 },
+					address: { type: "string", min: 2 },
+					city: { type: "string", min: 2 },
+					country: { type: "string", min: 2 },
 					admins: { type: "array", items: "number", optional: true },
 					employees: { type: "array", items: "number", optional: true },
 					projects: { type: "array", items: "number", optional: true }
@@ -78,6 +84,7 @@ module.exports = {
 				const doc = await this.adapter.insert(entity);
 				let json = await this.transformDocuments(ctx, {}, doc);
 				json = await this.transformEntity(entity);
+				json['_id'] = doc._id;
 				await this.entityChanged("created", json, ctx);
 				return json;
 			}
