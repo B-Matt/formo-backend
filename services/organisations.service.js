@@ -107,6 +107,9 @@ module.exports = {
 				id: { type: "string" },
 				organisation: { type: "object", props: {
 					name: { type: "string", min: 2 },
+					address: { type: "string", min: 2 },
+					city: { type: "string", min: 2 },
+					country: { type: "string", min: 2 },
 					admins: { type: "array", items: "number", optional: true },
 					employees: { type: "array", items: "number", optional: true },
 					projects: { type: "array", items: "number", optional: true }
