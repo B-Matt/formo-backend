@@ -1,7 +1,5 @@
 "use strict";
 
-// TODO: Dodati upload profilne slike usera kao file!! (To multithreadat)
-
 const jwt = require("jsonwebtoken");
 const { MoleculerClientError } = require("moleculer").Errors;
 const bcrypt = require("bcryptjs");
@@ -26,7 +24,7 @@ module.exports = {
 	settings: {
 		rest: "/",
 		JWT_SECRET: process.env.JWT_SECRET || "jwt_formo_token",
-		fields: ["_id", "name", "email", "sex", "organisation", "tasks", "projects", "settings"],
+		fields: ["_id", "firstName", "lastName", "email", "role", "sex", "organisation", "tasks", "projects", "settings"],
 		entityValidator: {
 			name: { type: "string", min: 2 },
 			password: { type: "string", min: 6 },
@@ -37,14 +35,6 @@ module.exports = {
 			projects: { type: "array", items: "string", optional: true },
 			settings: { type: "array", items: "object" }
 		},
-		populates: {
-			"organisation": {
-				action: "organisations.get",
-				params: {
-					fields: ["_id", "name", "address", "city", "country"]
-				}
-			}
-		}
 	},
 
 	/**
@@ -103,13 +93,34 @@ module.exports = {
 				org: { type: "object" },
 			},
 			async handler(ctx) {
-				const newOrg = await ctx.call("organisations.create", { organisation: ctx.params.org, throwIfNotExist: true })
+				/*const newOrg = await ctx.call("organisations.create", { organisation: ctx.params.org, throwIfNotExist: true })
 				const user = ctx.params.user;
 				user.organisation = newOrg._id.toString();
-				const newUser = await this.broker.call("user.create", { user: user, populate: ["organisation"] });
-				//const fullUser = this.broker.call("user.get", { id: newUser._id, populate: ["organisation"] });
-				// TODO: Dodati da ovaj populate radi...
-				return newUser;
+				//const newUser = await this.broker.call("user.create", { user: user, populate: ["organisation"] });
+				return this.create(ctx, user, { populate: ["organisation"]}).then(entity => this.transformResult(ctx, entity, ctx.meta.user));*/
+
+				const user = ctx.params.user;
+				const test = await this.validateEntity(user);
+
+				if(user.email) {
+					const isEmailExists = await this.adapter.findOne({ email: user.email });
+					if(isEmailExists) throw new MoleculerClientError("User with that e-mail already exists!", 422);
+				}
+
+				const newOrg = await ctx.call("organisations.create", { organisation: ctx.params.org, throwIfNotExist: true });
+				return this.validateEntity(user)
+					.then(() => {
+
+						user.password = bcrypt.hashSync(user.password, 10);
+						user.sex = user.sex || "male";
+						user.organisation = newOrg._id.toString();
+						user.tasks = user.tasks || [];
+						user.projects = user.projects || [];
+						user.settings = user.settings || [];
+
+						return this.create(ctx, user, { populate: ["organisation"]})
+							.then(entity => this.transformResult(ctx, entity, ctx.meta.user));
+					});
 			}
 		},
 
@@ -135,9 +146,11 @@ module.exports = {
 					if(isEmailExists) throw new MoleculerClientError("User with that e-mail already exists!", 422);
 				}
 
+				user.fristName = user.fistName || "";
+				user.lastName = user.lastName || "";
 				user.password = bcrypt.hashSync(user.password, 10);
+				user.role = user.role || "admin";
 				user.sex = user.sex || "male";
-				console.log('aa', user.organisation)
 				user.organisation = user.organisation || null;
 				user.tasks = user.tasks || [];
 				user.projects = user.projects || [];
@@ -164,8 +177,10 @@ module.exports = {
 			rest: "PATCH /user",
 			params: {
 				user: { type: "object", props: {
-					name: { type: "string", min: 2, optional: true },
+					fistName: { type: "string", min: 2, optional: true },
+					lastName: { type: "string", min: 2, optional: true },
 					password: { type: "string", min: 6, optional: true },
+					role: { type: "string", optional: true },
 					email: { type: "email", optional: true },
 					sex: { type: "string", optional: true },
 					taks: { type: "array", items: "object", optional: true },
@@ -176,16 +191,13 @@ module.exports = {
 			},
 			async handler(ctx) {
 				const data = ctx.params.user;
-
-				if(data.name) {
-					const foundUser = await this.adapter.findOne({ name: data.name });
-					if(foundUser && foundUser._id.toString() !== ctx.meta.user._id.toString()) 
-						throw new MoleculerClientError("User with that name already exists!", 422);
-				}
 				if(data.email) {
 					const foundUser = await this.adapter.findOne({ name: data.name });
 					if(foundUser && foundUser._id.toString() !== ctx.meta.user._id.toString()) 
 						throw new MoleculerClientError("User with that e-mail already exists!", 422);
+				}
+				if(!this.validateRole(data.role)) {
+					throw new MoleculerClientError("Invalid role ID", 400);
 				}
 
 				data.password = bcrypt.hashSync(data.password, 10);
@@ -298,6 +310,17 @@ module.exports = {
 				user.token = token || this.generateJWT(user);
 			}
 			return { user };
+		},
+		
+		/**
+		 * Validates inputed role.
+		 * 
+		 * @param {*} role 
+		 * @returns 
+		 */
+		validateRole(role) {
+			const roles = ["admin", "project_manager", "employee"];
+			return roles.includes(role);
 		}
 	}
 };

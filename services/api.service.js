@@ -76,7 +76,7 @@ module.exports = {
 		// Global CORS settings
 		cors: {
 			origin: "*",
-			methods: ["GET", "OPTIONS", "POST", "PUT", "DELETE"],
+			methods: ["GET", "OPTIONS", "POST", "PATCH", "PUT", "DELETE"],
 			allowedHeaders: "*",
 			//exposedHeaders: "*",
 			credentials: true,

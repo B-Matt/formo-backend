@@ -135,7 +135,7 @@ module.exports = {
 		 */
 		get: {
 			rest: "GET /organisations/:id",
-			auth: "required"
+			//auth: "required"
 		},
 
 		/**
