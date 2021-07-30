@@ -1,6 +1,7 @@
 "use strict";
 
 const jwt = require("jsonwebtoken");
+const _ = require('lodash');
 const { MoleculerClientError } = require("moleculer").Errors;
 const bcrypt = require("bcryptjs");
 
@@ -26,9 +27,11 @@ module.exports = {
 		JWT_SECRET: process.env.JWT_SECRET || "jwt_formo_token",
 		fields: ["_id", "firstName", "lastName", "email", "role", "sex", "organisation", "tasks", "projects", "settings"],
 		entityValidator: {
-			name: { type: "string", min: 2 },
+			firstName: { type: "string", min: 2 },
+			lastName: { type: "string", min: 2 },
 			password: { type: "string", min: 6 },
 			email: { type: "email" },
+			role: { type: "string", min: 2 },
 			sex: { type: "string", optional: true },
 			organisation: { type: "string", optional: true },
 			tasks: { type: "array", items: "string", optional: true },
@@ -36,11 +39,6 @@ module.exports = {
 			settings: { type: "array", items: "object" }
 		},
 	},
-
-	/**
-	 * Dependencies
-	 */
-	dependencies: ["organisations"],
 
 	/**
 	 * Actions
@@ -86,41 +84,30 @@ module.exports = {
 		 * @returns {Object} Created entity & token
 		 */
 		createAdmin: {
-			//auth: "required",
+			auth: "required",
 			rest: "POST /user/first",
 			params: {
 				user: { type: "object" },
 				org: { type: "object" },
 			},
 			async handler(ctx) {
-				/*const newOrg = await ctx.call("organisations.create", { organisation: ctx.params.org, throwIfNotExist: true })
+				await this.waitForServices(["organisations"]);
 				const user = ctx.params.user;
-				user.organisation = newOrg._id.toString();
-				//const newUser = await this.broker.call("user.create", { user: user, populate: ["organisation"] });
-				return this.create(ctx, user, { populate: ["organisation"]}).then(entity => this.transformResult(ctx, entity, ctx.meta.user));*/
-
-				const user = ctx.params.user;
-				const test = await this.validateEntity(user);
 
 				if(user.email) {
 					const isEmailExists = await this.adapter.findOne({ email: user.email });
 					if(isEmailExists) throw new MoleculerClientError("User with that e-mail already exists!", 422);
 				}
-
 				const newOrg = await ctx.call("organisations.create", { organisation: ctx.params.org, throwIfNotExist: true });
-				return this.validateEntity(user)
-					.then(() => {
+				
+				user.organisation = newOrg._id.toString();
+				const newUser = await this.broker.call("user.create", { user: user });
 
-						user.password = bcrypt.hashSync(user.password, 10);
-						user.sex = user.sex || "male";
-						user.organisation = newOrg._id.toString();
-						user.tasks = user.tasks || [];
-						user.projects = user.projects || [];
-						user.settings = user.settings || [];
+				const params = { id: user.organisation, user: newUser.user._id.toString() };
+				await this.broker.call("organisations.addMember", params);
 
-						return this.create(ctx, user, { populate: ["organisation"]})
-							.then(entity => this.transformResult(ctx, entity, ctx.meta.user));
-					});
+				newUser.user.organisation = await this.getUserOrganisation(ctx, user.organisation);
+				return newUser;
 			}
 		},
 
@@ -223,7 +210,12 @@ module.exports = {
 		 */
 		get: {
 			rest: "GET /user/:id",
-			auth: "required"
+			auth: "required",
+			async handler(ctx) {
+				const user = await this.getById(ctx.params.id);
+				user.organisation = await this.getUserOrganisation(ctx, user.organisation);
+				return user;
+			}		
 		},
 
 		/**
@@ -238,6 +230,11 @@ module.exports = {
 			async handler(ctx) {
 				const users = await this.adapter.find({ query: { organisation: ctx.params.org } });
 				if (!users) throw new MoleculerClientError("Users with provided organisation ID not found!", 404);
+				
+				let i = users.length;
+				while(i--) {
+					users[i].organisation = await this.getUserOrganisation(ctx, users[i].organisation);
+				}
 				return users;
 			},
 		},
@@ -321,6 +318,22 @@ module.exports = {
 		validateRole(role) {
 			const roles = ["admin", "project_manager", "employee"];
 			return roles.includes(role);
+		},
+
+		/**
+		 * Returns users organisation with clean data.
+		 * @param {*} organisation 
+		 * @returns 
+		 */
+		async getUserOrganisation(ctx, organisation) {
+			const userOrg = await ctx.call("organisations.get", { id: organisation });	
+			delete userOrg._id;
+			delete userOrg.admins;
+			delete userOrg.employees;
+			delete userOrg.projects;
+			delete userOrg.createdAt;
+			delete userOrg.updatedAt;
+			return userOrg;
 		}
 	}
 };

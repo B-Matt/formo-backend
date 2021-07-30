@@ -22,15 +22,14 @@ module.exports = {
 	 */
 	settings: {
 		rest: "/",
-		fields: ["_id", "name", "address", "city", "country", "admins", "employees", "projects", "createdAt", "updatedAt"],
+		fields: ["_id", "name", "address", "city", "country", "members", "projects", "createdAt", "updatedAt"],
 		entityValidator: {
 			name: { type: "string", min: 2 },
 			address: { type: "string", min: 2 },
 			city: { type: "string", min: 2 },
 			country: { type: "string", min: 2 },
-			admins: { type: "array", items: "number", optional: true },
-			employees: { type: "array", items: "number", optional: true },
-			projects: { type: "array", items: "number", optional: true },
+			members: { type: "array", items: "string", optional: true },
+			projects: { type: "array", items: "string", optional: true },
 		}
 	},
 
@@ -110,9 +109,8 @@ module.exports = {
 					address: { type: "string", min: 2 },
 					city: { type: "string", min: 2 },
 					country: { type: "string", min: 2 },
-					admins: { type: "array", items: "number", optional: true },
-					employees: { type: "array", items: "number", optional: true },
-					projects: { type: "array", items: "number", optional: true }
+					members: { type: "array", items: "string", optional: true },
+					projects: { type: "array", items: "string", optional: true }
 				} }
 			},
 			async handler(ctx) {
@@ -149,9 +147,28 @@ module.exports = {
 		 * Removes Organisation entity from DB based on provided entity ID.
 		 */
 		remove: {
-			rest: "DELETE /organisations/:id",
-			auth: "required"
+			auth: "required",
+			rest: "DELETE /organisations/:id"
 		},
+
+		addMember: {
+			auth: "required",
+			rest: "POST /organisations/member",
+			params: {
+				id: { type: "string" },
+				user: { type: "string" },
+			},
+			async handler(ctx) {
+				const org = await this.adapter.findOne({ "_id": ctx.params.id });
+				if(!org) throw new MoleculerClientError("Organisation not found!", 404);
+
+				org.members.push(ctx.params.user);
+				org.updatedAt = new Date();
+
+				const doc = await this.adapter.updateById(ctx.params.id, { "$set": org });
+				return doc;
+			}
+		}
 	},
 
 	/**
@@ -159,7 +176,6 @@ module.exports = {
 	 */
 	events: {
 		// TODO: Create event that is called when user deletes it's account (so that user can be removed from organisation arrays).
-		// TODO: Create event that is called when new user joins organisation.
 		// TODO: Create event that is called when new project is created.
 	},
 
