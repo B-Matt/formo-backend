@@ -1,5 +1,6 @@
 "use strict";
 
+const _ = require('lodash');
 const { MoleculerClientError } = require("moleculer").Errors;
 const DbService = require("../mixins/db.mixin");
 const CacheCleanerMixin = require("../mixins/cache.cleaner.mixin");
@@ -133,7 +134,19 @@ module.exports = {
 		 */
 		get: {
 			rest: "GET /organisations/:id",
-			//auth: "required"
+			auth: "required",
+			async handler(ctx) {
+				const org = await this.adapter.findOne({ "_id": ctx.params.id });
+				
+				let membersIdx = org.members.length;
+				while(membersIdx--) {
+					const user = await ctx.call("user.get", { id: org.members[membersIdx], getOrg: false });
+					org.members[membersIdx] = _.pickBy(user, (v, k) => {
+						return k == "firstName" || k == "lastName" || k == "role";
+					});
+				}
+				return org;
+			}
 		},
 
 		/**
@@ -166,6 +179,8 @@ module.exports = {
 			async handler(ctx) {
 				const org = await this.adapter.findOne({ "_id": ctx.params.organisation.id });
 				if(!org) throw new MoleculerClientError("Organisation not found!", 404);
+				if(org.members.indexOf(ctx.params.organisation.user) != -1) throw new MoleculerClientError("User is already member of this organisation!", 409);
+
 				org.members.push(ctx.params.organisation.user);
 				org.updatedAt = new Date();
 

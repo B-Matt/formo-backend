@@ -1,7 +1,7 @@
 "use strict";
 
-const jwt = require("jsonwebtoken");
 const _ = require('lodash');
+const jwt = require("jsonwebtoken");
 const { MoleculerClientError } = require("moleculer").Errors;
 const bcrypt = require("bcryptjs");
 
@@ -215,9 +215,17 @@ module.exports = {
 		get: {
 			rest: "GET /user/:id",
 			auth: "required",
+			params: {
+				getOrg: { type: "boolean", optional: true }
+			},
 			async handler(ctx) {
 				const user = await this.getById(ctx.params.id);
-				user.organisation = await this.getUserOrganisation(ctx, user.organisation);
+				if(!user) {
+					throw new MoleculerClientError("User not found!", 404);
+				}
+				if(ctx.params.getOrg == undefined || ctx.params.getOrg) {
+					user.organisation = await this.getUserOrganisation(ctx, user.organisation);
+				}
 				return user;
 			}		
 		},
@@ -288,7 +296,7 @@ module.exports = {
 			async handler(payload) {
 				if(!payload) return;
 				const user = await this.adapter.findOne({ "_id": payload.user });
-				if(!user) throw new MoleculerClientError("User not found!", 404);
+				if(!user) return;
 
 				user.organisation = payload.id;
 				await this.adapter.updateById(payload.user, { "$set": user });
@@ -347,14 +355,10 @@ module.exports = {
 		 * @returns 
 		 */
 		async getUserOrganisation(ctx, organisation) {
-			const userOrg = await ctx.call("organisations.get", { id: organisation });	
-			delete userOrg._id;
-			delete userOrg.admins;
-			delete userOrg.employees;
-			delete userOrg.projects;
-			delete userOrg.createdAt;
-			delete userOrg.updatedAt;
-			return userOrg;
+			const userOrg = await ctx.call("organisations.get", { id: organisation });
+			return _.pickBy(userOrg, (v, k) => {
+				return k == "name" || k == "address" || k == "city" || k == "country";
+			});
 		}
 	}
 };
