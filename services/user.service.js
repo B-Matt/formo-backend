@@ -133,6 +133,10 @@ module.exports = {
 					if(isEmailExists) throw new MoleculerClientError("User with that e-mail already exists!", 422);
 				}
 
+				if(!this.validateRole(user.role)) {
+					throw new MoleculerClientError("Invalid role ID", 400);
+				}
+
 				user.fristName = user.fistName || "";
 				user.lastName = user.lastName || "";
 				user.password = bcrypt.hashSync(user.password, 10);
@@ -244,7 +248,13 @@ module.exports = {
 		 */
 		remove: {
 			rest: "DELETE /user/:id",
-			auth: "required"
+			auth: "required",
+			async handler(ctx) {
+				const user = await this.getById(ctx.params.id);
+				this.broker.emit('user.removed', { user: user._id, org: user.organisation });
+				this.adapter.removeById(ctx.params.id);
+				return 'User deleted!';
+			}
 		},
 
 		/**
@@ -273,7 +283,18 @@ module.exports = {
 	/**
 	 * Events
 	 */
-	events: {},
+	events: {
+		"user.orgAdded": {
+			async handler(payload) {
+				if(!payload) return;
+				const user = await this.adapter.findOne({ "_id": payload.user });
+				if(!user) throw new MoleculerClientError("User not found!", 404);
+
+				user.organisation = payload.id;
+				await this.adapter.updateById(payload.user, { "$set": user });
+			}
+		}
+	},
 
 	/**
 	 * Methods

@@ -531,8 +531,10 @@
 					requests: {
 						user: [
 							{ id: "create", action: "user.create", rest: "/api/user/", method: "POST", object: "user", fields: [
-								{ field: "name", label: "Name", type: "string", paramType: "body", model: "userRegName" },
+								{ field: "firstName", label: "First Name", type: "string", paramType: "body", model: "userRegFirstName" },
+								{ field: "lastName", label: "Last Name", type: "string", paramType: "body", model: "userRegLastName" },
 								{ field: "email", label: "E-Mail", type: "email", paramType: "body", model: "userRegEmail" },
+								{ field: "role", label: "", type: "hidden", paramType: "body", model: "userRegRole" },
 								{ field: "password", label: "Password", type: "password", paramType: "body", model: "userRegPass" },
 								{ field: "settings", label: "", type: "hidden", paramType: "body", model: "userRegSettings" }
 							], response: null, status: null, duration: null },
@@ -559,7 +561,7 @@
 								{ field: "jwt", label: "Token", type: "string", paramType: "auth", model: "authToken" }
 							], response: null, status: null, duration: null },
 							{ id: "getByOrg", action: "user.getByOrg", rest: "/api/user/org/:org", method: "GET", fields: [
-								{ field: "org", label: "Organisation ID", type: "string", paramType: "url", model: "organisationId" },
+								{ field: "id", label: "Organisation ID", type: "string", paramType: "url", model: "organisationId" },
 								{ field: "jwt", label: "Token", type: "string", paramType: "auth", model: "authToken" }
 							], response: null, status: null, duration: null },
 							{ id: "remove", action: "user.remove", rest: "/api/user/:id", method: "DELETE", fields: [
@@ -570,11 +572,19 @@
 						orgs: [
 							{ id: "create", action: "orgs.create", rest: "/api/organisations/", method: "POST", object: "organisation", fields: [
 								{ field: "name", label: "Name", type: "string", paramType: "body", model: "orgsCreateName" },
+								{ field: "address", label: "Adresa", type: "string", paramType: "body", model: "orgsCreateAddress" },
+								{ field: "city", label: "Grad", type: "string", paramType: "body", model: "orgsCreateCity" },
+								{ field: "country", label: "Država", type: "string", paramType: "body", model: "orgsCreateCountry" },						
 								{ field: "jwt", label: "Token", type: "string", paramType: "auth", model: "authToken" }
 							], response: null, status: null, duration: null },
 							{ id: "update", action: "orgs.update", rest: "/api/organisations/:id", method: "PATCH", object: "organisation", fields: [
 								{ field: "id", label: "Organisation ID", type: "string", paramType: "url", model: "orgId" },
 								{ field: "name", label: "Name", type: "string", paramType: "body", model: "orgsEditName" },
+								{ field: "jwt", label: "Token", type: "string", paramType: "auth", model: "authToken" }
+							], response: null, status: null, duration: null },
+							{ id: "addMember", action: "orgs.addMember", rest: "/api/organisations/member", method: "POST", object: "organisation", fields: [
+								{ field: "id", label: "Organisation ID", type: "string", paramType: "body", model: "orgId" },
+								{ field: "user", label: "User ID", type: "string", paramType: "body", model: "orgsUserId" },
 								{ field: "jwt", label: "Token", type: "string", paramType: "auth", model: "authToken" }
 							], response: null, status: null, duration: null },
 							{ id: "list", action: "orgs.list", rest: "/api/organisations/", method: "GET", response: null, status: null, duration: null },
@@ -636,8 +646,10 @@
 						userId: "",
 
 						// User Registration
-						userRegName: "Testing Test",
+						userRegFirstName: "Testing",
+						userRegLastName: "Test",
 						userRegEmail: "testing@example.com",
+						userRegRole: "employee",
 						userRegPass: "testing123",
 						userRegSettings: [],
 
@@ -653,8 +665,13 @@
 						organisationId: "b09XeORnoCdBImSX",
 
 						// [ORGANISATIONS SERVICE]
+						orgsUserId: "",
+
 						// Organisation Create
 						orgsCreateName: "FERIT",
+						orgsCreateAddress: "Adresa",
+						orgsCreateCity: "Grad",
+						orgsCreateCountry: "Država",
 
 						// Organisation Edit
 						orgId: "",

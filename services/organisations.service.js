@@ -75,7 +75,7 @@ module.exports = {
 				}
 
 				entity.admins = entity.admins || [];
-				entity.employees = entity.employees || [];
+				entity.members = entity.members || [];
 				entity.projects = entity.projects || [];
 				entity.createdAt = new Date();
 				entity.updatedAt = new Date();
@@ -151,22 +151,26 @@ module.exports = {
 			rest: "DELETE /organisations/:id"
 		},
 
+		/**
+		 * Adds new member to the organisation's members field.
+		 */
 		addMember: {
 			auth: "required",
 			rest: "POST /organisations/member",
 			params: {
-				id: { type: "string" },
-				user: { type: "string" },
+				organisation: { type: "object", props: {
+					id: { type: "string", min: 2 },
+					user: { type: "string", min: 2 },
+				} }
 			},
 			async handler(ctx) {
-				const org = await this.adapter.findOne({ "_id": ctx.params.id });
+				const org = await this.adapter.findOne({ "_id": ctx.params.organisation.id });
 				if(!org) throw new MoleculerClientError("Organisation not found!", 404);
-
-				org.members.push(ctx.params.user);
+				org.members.push(ctx.params.organisation.user);
 				org.updatedAt = new Date();
 
-				const doc = await this.adapter.updateById(ctx.params.id, { "$set": org });
-				return doc;
+				this.broker.emit('user.orgAdded', ctx.params.organisation);
+				return await this.adapter.updateById(ctx.params.organisation.id, { "$set": org });
 			}
 		}
 	},
@@ -175,8 +179,20 @@ module.exports = {
 	 * Events
 	 */
 	events: {
-		// TODO: Create event that is called when user deletes it's account (so that user can be removed from organisation arrays).
 		// TODO: Create event that is called when new project is created.
+
+		"user.removed": {
+			async handler(payload) {
+				
+				if(!payload) return;
+				const org = await this.adapter.findOne({ "_id": payload.org });
+				if(!org) return;
+
+				org.members = org.members.filter(m => m != payload.user);
+				org.updatedAt = new Date();
+				await this.adapter.updateById(payload.org, { "$set": org });
+			}
+		}
 	},
 
 	/**
