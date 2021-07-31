@@ -1,5 +1,7 @@
 "use strict";
 
+const _ = require('lodash');
+const jwt = require("jsonwebtoken");
 const { MoleculerClientError } = require("moleculer").Errors;
 const DbService = require("../mixins/db.mixin");
 const CacheCleanerMixin = require("../mixins/cache.cleaner.mixin");
@@ -19,7 +21,6 @@ module.exports = {
 	 * Settings
 	 */
 	settings: {
-		// TODO: Pogledati populates i to staviti pod organisation i tasks
 		rest: "/",
 		fields: [
 			"_id",
@@ -31,7 +32,7 @@ module.exports = {
 		],
 		entityValidator: {
 			name: { type: "string", min: 2 },
-			organisation: { type: "number" },
+			organisation: { type: "string", min: 2 },
 			budget: { type: "number", optional: true },
 			members: { type: "array", items: "number", optional: true },
 			tasks: { type: "array", items: "number", optional: true },
@@ -64,7 +65,7 @@ module.exports = {
 					type: "object",
 					props: {
 						name: { type: "string", min: 1 },
-						organisation: { type: "number" },
+						organisation: { type: "string" },
 						budget: { type: "number" },
 						members: {
 							type: "array",
@@ -81,17 +82,30 @@ module.exports = {
 			},
 			async handler(ctx) {
 				const entity = ctx.params.project;
+				const jwtToken = jwt.decode(ctx.meta.token);
+
+				if(!ctx.params.project.organisation || ctx.params.project.organisation == "")
+					throw new MoleculerClientError("Organisation ID is not provided!", 400);
+
 				await this.validateEntity(entity);
+				await this.waitForServices(["organisations"]);
+
+				const isProjectExisting = await this.adapter.findOne({ name: entity.name });
+				if(isProjectExisting) throw new MoleculerClientError("Project with that name already exists!", 422);
+
+				const userOrg = await ctx.call("organisations.isCreated", { id: entity.organisation });
+				if(!userOrg) throw new MoleculerClientError("Provided organisation not found!", 404);
 
 				entity.name = entity.name || "";
-				entity.organisation = entity.organisation || -1;
+				entity.organisation = entity.organisation || "";
 				entity.budget = entity.budget || 0;
-				entity.members = entity.members || [];
+				entity.members = entity.members || [ jwtToken.id ];
 				entity.tasks = entity.tasks || [];
 				entity.createdAt = new Date();
 				entity.updatedAt = new Date();
 
 				const doc = await this.adapter.insert(entity);
+				this.broker.emit('project.created', { org: entity.organisation, project: doc._id });
 				let json = await this.transformDocuments(ctx, {}, doc);
 				json = await this.transformEntity(entity);
 				await this.entityChanged("created", json, ctx);
@@ -154,6 +168,18 @@ module.exports = {
 		get: {
 			rest: "GET /projects/:id",
 			auth: "required",
+			async handler(ctx) {
+				const project = await this.getById(ctx.params.id);
+				if(!project) throw new MoleculerClientError("Project not found!", 404);
+				
+				for(let i = 0, len = project.members.length; i < len; i++) {
+					const user = await ctx.call("user.get", { id: project.members[i], getOrg: false });
+					project.members[i] = _.pickBy(user, (v, k) => {
+						return k == "firstName" || k == "lastName" || k == "email" || k == "role";
+					});
+				}
+				return project;
+			}
 		},
 
 		/**
@@ -169,6 +195,12 @@ module.exports = {
 		remove: {
 			rest: "DELETE /projects/:id",
 			auth: "required",
+			async handler(ctx) {
+				const project = await this.getById(ctx.params.id);
+				this.broker.emit('project.removed', { project: project._id, org: project.organisation });
+				this.adapter.removeById(ctx.params.id);
+				return 'Project deleted!';
+			}
 		},
 	},
 

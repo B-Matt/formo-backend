@@ -601,10 +601,16 @@
 								{ field: "id", label: "Organisation ID", type: "string", paramType: "url", model: "orgRemoveId" },
 								{ field: "jwt", label: "Token", type: "string", paramType: "auth", model: "authToken" }
 							], response: null, status: null, duration: null },
+							{ id: "getProjects", action: "orgs.get", rest: "/api/organisations/projects/:id", method: "GET", fields: [
+								{ field: "id", label: "Organisation ID", type: "string", paramType: "url", model: "orgRemoveId" },
+								{ field: "jwt", label: "Token", type: "string", paramType: "auth", model: "authToken" }
+							], response: null, status: null, duration: null },							
 						],
 						projects: [
 							{ id: "create", action: "projects.create", rest: "/api/projects/", method: "POST", object: "project", fields: [
 								{ field: "name", label: "Name", type: "string", paramType: "body", model: "projCreateName" },
+								{ field: "organisation", label: "Org ID", type: "string", paramType: "body", model: "orgRemoveId" },
+								{ field: "budget", label: "Budget", type: "number", paramType: "body", model: "projCreateBudget" },
 								{ field: "jwt", label: "Token", type: "string", paramType: "auth", model: "authToken" }
 							], response: null, status: null, duration: null },
 							{ id: "update", action: "projects.update", rest: "/api/projects/:id", method: "PATCH", object: "project", fields: [
@@ -688,6 +694,7 @@
 						// [PROJECTS SERVICE]
 						// Project Create
 						projCreateName: "Testing",
+						projCreateBudget: 0,
 
 						// Project Edit
 						projId: "",

@@ -227,7 +227,7 @@ module.exports = {
 					user.organisation = await this.getUserOrganisation(ctx, user.organisation);
 				}
 				return user;
-			}		
+			}
 		},
 
 		/**

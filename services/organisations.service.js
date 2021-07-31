@@ -150,6 +150,16 @@ module.exports = {
 		},
 
 		/**
+		 * Used to check is provided organisation ID is valid.
+		 */
+		isCreated: {
+			rest: "GET /organisations/check/:id",
+			async handler(ctx) {
+				return await this.adapter.findOne({ "_id": ctx.params.id });
+			}
+		},
+
+		/**
 		 * Returns list of Organisation entities inside DB.
 		 */
 		list: {
@@ -210,14 +220,36 @@ module.exports = {
 				org.updatedAt = new Date();
 				return await this.adapter.updateById(ctx.params.organisation.id, { "$set": org });
 			}
-		}
+		},
+
+		/**
+		 * 
+		 */
+		projects: {
+			auth: "required",
+			rest: "GET /organisations/projects/:id",
+			params: {
+			},
+			async handler(ctx) {
+				await this.waitForServices(["projects"]);
+				const org = await this.adapter.findOne({ "_id": ctx.params.id });
+				if(!org) throw new MoleculerClientError("Organisation not found!", 404);
+
+				for(let i = 0, len = org.projects.length; i < len; i++) {
+					const project = await ctx.call("projects.get", { id: org.projects[i] });
+					org.projects[i] = _.pickBy(project, (v, k) => {
+						return k == "name" || k == "budget";
+					});
+				}
+				return org.projects;
+			}
+		},
 	},
 
 	/**
 	 * Events
 	 */
 	events: {
-		// TODO: Create event that is called when new project is created.
 		"user.removed": {
 			async handler(payload) {
 				if(!payload) return;
@@ -228,7 +260,31 @@ module.exports = {
 				org.updatedAt = new Date();
 				await this.adapter.updateById(payload.org, { "$set": org });
 			}
-		}
+		},
+
+		"project.created": {
+			async handler(payload) {
+				if(!payload) return;
+				const org = await this.adapter.findOne({ "_id": payload.org });
+				if(!org) return;
+				
+				org.projects.push(payload.project);
+				org.updatedAt = new Date();
+				await this.adapter.updateById(payload.org, { "$set": org });
+			}
+		},
+
+		"project.removed": {
+			async handler(payload) {
+				if(!payload) return;
+				const org = await this.adapter.findOne({ "_id": payload.org });
+				if(!org) return;
+				
+				org.projects = org.projects.filter(p => p != payload.project);
+				org.updatedAt = new Date();
+				await this.adapter.updateById(payload.org, { "$set": org });
+			}
+		},
 	},
 
 	/**
