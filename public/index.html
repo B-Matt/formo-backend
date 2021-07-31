@@ -587,6 +587,11 @@
 								{ field: "user", label: "User ID", type: "string", paramType: "body", model: "orgsUserId" },
 								{ field: "jwt", label: "Token", type: "string", paramType: "auth", model: "authToken" }
 							], response: null, status: null, duration: null },
+							{ id: "removeMember", action: "orgs.removeMember", rest: "/api/organisations/member/", method: "DELETE", object: "organisation", fields: [
+								{ field: "id", label: "Organisation ID", type: "string", paramType: "body", model: "orgId" },
+								{ field: "user", label: "User ID", type: "string", paramType: "body", model: "orgsUserId" },
+								{ field: "jwt", label: "Token", type: "string", paramType: "auth", model: "authToken" }
+							], response: null, status: null, duration: null },
 							{ id: "list", action: "orgs.list", rest: "/api/organisations/", method: "GET", response: null, status: null, duration: null },
 							{ id: "get", action: "orgs.get", rest: "/api/organisations/:id", method: "GET", fields: [
 								{ field: "id", label: "Organisation ID", type: "string", paramType: "url", model: "orgRemoveId" },

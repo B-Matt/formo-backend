@@ -187,6 +187,29 @@ module.exports = {
 				this.broker.emit('user.orgAdded', ctx.params.organisation);
 				return await this.adapter.updateById(ctx.params.organisation.id, { "$set": org });
 			}
+		},
+
+		/**
+		 * Removes member from the organisation.
+		 */
+		removeMember: {
+			auth: "required",
+			rest: "DELETE /organisations/member/",
+			params: {
+				organisation: { type: "object", props: {
+					id: { type: "string", min: 2 },
+					user: { type: "string", min: 2 },
+				} }
+			},
+			async handler(ctx) {
+				const org = await this.adapter.findOne({ "_id": ctx.params.organisation.id });
+				if(!org) throw new MoleculerClientError("Organisation not found!", 404);
+				if(org.members.indexOf(ctx.params.organisation.user) == -1) throw new MoleculerClientError("User is not member of this organisation!", 400);
+
+				org.members = org.members.filter(m => m != ctx.params.organisation.user);
+				org.updatedAt = new Date();
+				return await this.adapter.updateById(ctx.params.organisation.id, { "$set": org });
+			}
 		}
 	},
 
@@ -195,10 +218,8 @@ module.exports = {
 	 */
 	events: {
 		// TODO: Create event that is called when new project is created.
-
 		"user.removed": {
 			async handler(payload) {
-				
 				if(!payload) return;
 				const org = await this.adapter.findOne({ "_id": payload.org });
 				if(!org) return;
