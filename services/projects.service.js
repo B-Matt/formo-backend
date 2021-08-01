@@ -227,6 +227,18 @@ module.exports = {
 	 * Events
 	 */
 	events: {
+		"user.removed": {
+			async handler(payload) {
+				if(!payload) return;
+				const project = await this.adapter.findOne({ "organisation": payload.org });
+				if(!project) return;
+
+				project.members = project.members.filter(m => m != payload.user);
+				project.updatedAt = new Date();
+				await this.adapter.updateById(project._id, { "$set": project });
+			}
+		},
+
 		"task.created": {
 			async handler(payload) {
 				if(!payload) return;

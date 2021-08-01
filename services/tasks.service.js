@@ -260,7 +260,8 @@ module.exports = {
 
 				let idx = tasks.length;
 				while(idx--) {
-					this.adapter.removeById(tasks[idx]._id);
+					tasks[idx].assignee = "";
+					this.adapter.updateById(tasks[idx]._id, { "$set": tasks[idx] });
 				}
 			}
 		},
