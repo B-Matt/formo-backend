@@ -34,8 +34,8 @@ module.exports = {
 			name: { type: "string", min: 2 },
 			organisation: { type: "string", min: 2 },
 			budget: { type: "number", optional: true },
-			members: { type: "array", items: "number", optional: true },
-			tasks: { type: "array", items: "number", optional: true },
+			members: { type: "array", items: "string", optional: true },
+			tasks: { type: "array", items: "string", optional: true },
 		},
 	},
 
@@ -105,7 +105,7 @@ module.exports = {
 				entity.updatedAt = new Date();
 
 				const doc = await this.adapter.insert(entity);
-				this.broker.emit('project.created', { org: entity.organisation, project: doc._id });
+				this.broker.emit('project.created', { org: entity.organisation, project: doc._id, user: jwtToken.id });
 				let json = await this.transformDocuments(ctx, {}, doc);
 				json = await this.transformEntity(entity);
 				await this.entityChanged("created", json, ctx);
@@ -168,15 +168,24 @@ module.exports = {
 		get: {
 			rest: "GET /projects/:id",
 			auth: "required",
+			params: {
+				getMembers: { type: "boolean", optional: true }
+			},
 			async handler(ctx) {
 				const project = await this.getById(ctx.params.id);
-				if(!project) throw new MoleculerClientError("Project not found!", 404);
-				
-				for(let i = 0, len = project.members.length; i < len; i++) {
-					const user = await ctx.call("user.get", { id: project.members[i], getOrg: false });
-					project.members[i] = _.pickBy(user, (v, k) => {
-						return k == "firstName" || k == "lastName" || k == "email" || k == "role";
+				if(!project) throw new MoleculerClientError("Project not found!", 404);				
+				for(let i = 0, len = project.tasks.length; i < len; i++) {
+					const task = await ctx.call("tasks.get", { id: project.tasks[i] });
+					project.tasks[i] = _.pickBy(task, (v, k) => {
+						return k == "name" || k == "description" || k == "assignee" || k == "dueDate" || k == "project" || k == "priority";						
 					});
+				}
+
+				if(ctx.params.getOrg == undefined || ctx.params.getOrg) {
+					return project;
+				}
+				for(let i = 0, len = project.members.length; i < len; i++) {
+					project.members[i] = await ctx.call("user.getBasicData", { id: project.members[i] });
 				}
 				return project;
 			}
@@ -202,12 +211,62 @@ module.exports = {
 				return 'Project deleted!';
 			}
 		},
+
+		/**
+		 * Used to check is provided project ID is valid.
+		 */
+		isCreated: {
+			rest: "GET /projects/check/:id",
+			async handler(ctx) {
+				return await this.adapter.findOne({ "_id": ctx.params.id });
+			}
+		},
 	},
 
 	/**
 	 * Events
 	 */
-	events: {},
+	events: {
+		"task.created": {
+			async handler(payload) {
+				if(!payload) return;
+				const project = await this.adapter.findOne({ "_id": payload.project });
+				if(!project) return;
+
+				project.tasks.push(payload.task);
+				project.updatedAt = new Date();
+				await this.adapter.updateById(payload.project, { "$set": project });
+			}
+		},
+
+		"task.removed": {
+			async handler(payload) {
+				if(!payload) return;
+				const project = await this.adapter.findOne({ "_id": payload.project });
+				if(!project) return;
+
+				project.tasks = project.tasks.filter(t => t != payload.task);
+				project.updatedAt = new Date();
+				await this.adapter.updateById(payload.project, { "$set": project });
+			}
+		},
+
+		"organisation.removed": {
+			async handler(payload) {
+				if(!payload) return;
+
+				const projects = await this.adapter.find({ query: { organisation: payload.org } });
+				if (!projects) return;
+
+				let idx = projects.length;
+				while(idx--) {
+					this.broker.emit('project.removed', { project: projects[idx]._id, org: null });
+					this.adapter.removeById(projects[idx]._id);
+
+				}
+			}
+		},
+	},
 
 	/**
 	 * Methods

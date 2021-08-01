@@ -25,7 +25,7 @@ module.exports = {
 	settings: {
 		rest: "/",
 		JWT_SECRET: process.env.JWT_SECRET || "jwt_formo_token",
-		fields: ["_id", "firstName", "lastName", "email", "role", "sex", "organisation", "tasks", "projects", "settings"],
+		fields: ["_id", "firstName", "lastName", "email", "role", "sex", "organisation", "projects", "settings"],
 		entityValidator: {
 			firstName: { type: "string", min: 2 },
 			lastName: { type: "string", min: 2 },
@@ -34,7 +34,6 @@ module.exports = {
 			role: { type: "string", min: 2 },
 			sex: { type: "string", optional: true },
 			organisation: { type: "string", optional: true },
-			tasks: { type: "array", items: "string", optional: true },
 			projects: { type: "array", items: "string", optional: true },
 			settings: { type: "array", items: "object" }
 		},
@@ -84,7 +83,6 @@ module.exports = {
 		 * @returns {Object} Created entity & token
 		 */
 		createAdmin: {
-			auth: "required",
 			rest: "POST /user/first",
 			params: {
 				user: { type: "object" },
@@ -103,7 +101,7 @@ module.exports = {
 				user.organisation = newOrg._id.toString();
 				const newUser = await this.broker.call("user.create", { user: user });
 
-				const params = { id: user.organisation, user: newUser.user._id.toString() };
+				const params = { organisation: { id: user.organisation, user: newUser.user._id.toString() }};
 				await this.broker.call("organisations.addMember", params);
 
 				newUser.user.organisation = await this.getUserOrganisation(ctx, user.organisation);
@@ -142,8 +140,7 @@ module.exports = {
 				user.password = bcrypt.hashSync(user.password, 10);
 				user.role = user.role || "admin";
 				user.sex = user.sex || "male";
-				user.organisation = user.organisation || null;
-				user.tasks = user.tasks || [];
+				user.organisation = user.organisation || "";
 				user.projects = user.projects || [];
 				user.settings = user.settings || [];
 
@@ -226,7 +223,30 @@ module.exports = {
 				if(ctx.params.getOrg == undefined || ctx.params.getOrg) {
 					user.organisation = await this.getUserOrganisation(ctx, user.organisation);
 				}
+
+				console.log(user);
+				for(let i = 0, len = user.projects.length; i < len; i++) {
+					const project = await ctx.call("projects.get", { id: user.projects[i] });
+					user.projects[i] = _.pickBy(project, (v, k) => {
+						return k == "name" || k == "budget" || k == "tasks";
+					});
+				}
 				return user;
+			}
+		},
+
+		/**
+		 * Returns User entity with small amount of data.
+		 */
+		getBasicData: {
+			rest: "GET /user/small/:id",
+			auth: "required",
+			async handler(ctx) {
+				const user = await this.getById(ctx.params.id);
+				if(!user) throw new MoleculerClientError("User not found!", 404);
+				return _.pickBy(user, (v, k) => {
+					return k == "firstName" || k == "lastName" || k == "role" || k == "sex";
+				});
 			}
 		},
 
@@ -301,7 +321,47 @@ module.exports = {
 				user.organisation = payload.id;
 				await this.adapter.updateById(payload.user, { "$set": user });
 			}
-		}
+		},
+
+		"project.created": {
+			async handler(payload) {
+				if(!payload) return;
+				const user = await this.adapter.findOne({ "_id": payload.user });
+				if(!user) return;
+				
+				user.projects.push(payload.project);
+				user.updatedAt = new Date();
+				await this.adapter.updateById(payload.user, { "$set": user });
+			}
+		},
+
+		"project.removed": {
+			async handler(payload) {
+				if(!payload) return;
+				const user = await this.adapter.findOne({ "_id": payload.user }); // TODO: Provjeriti kako pronaći usera u arrayu projekata!
+				if(!user) return;
+				
+				user.projects = user.projects.filter(p => p != payload.project);
+				user.updatedAt = new Date();
+				await this.adapter.updateById(payload.user, { "$set": user });
+			}
+		},
+
+		"organisation.removed": {
+			async handler(payload) {
+				if(!payload) return;
+
+				const users = await this.adapter.find({ query: { organisation: payload.org } });
+				if (!users) return;
+
+				let idx = users.length;
+				while(idx--) {
+					users[idx].role = "employee";
+					users[idx].organisation = "";
+					await this.adapter.updateById(users[idx]._id, { "$set": data });
+				}
+			}
+		},
 	},
 
 	/**

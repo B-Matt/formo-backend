@@ -539,7 +539,8 @@
 								{ field: "settings", label: "", type: "hidden", paramType: "body", model: "userRegSettings" }
 							], response: null, status: null, duration: null },
 							{ id: "createAdmin", action: "user.createAdmin", rest: "/api/user/first", method: "POST", object: "user", fields: [
-								{ field: "name", label: "Name", type: "string", paramType: "body", model: "userRegName" },
+								{ field: "firstName", label: "First Name", type: "string", paramType: "body", model: "userRegFirstName" },
+								{ field: "lastName", label: "Last Name", type: "string", paramType: "body", model: "userRegLastName" },
 								{ field: "email", label: "E-Mail", type: "email", paramType: "body", model: "userRegEmail" },
 								{ field: "password", label: "Password", type: "password", paramType: "body", model: "userRegPass" },
 								{ field: "settings", label: "", type: "hidden", paramType: "body", model: "userRegSettings" }
@@ -631,6 +632,8 @@
 						tasks: [
 							{ id: "create", action: "tasks.create", rest: "/api/tasks/", method: "POST", object: "task", fields: [
 								{ field: "name", label: "Name", type: "string", paramType: "body", model: "taskCreateName" },
+								{ field: "description", label: "Description", type: "string", paramType: "body", model: "taskCreateDescription" },
+								{ field: "project", label: "Project ID", type: "string", paramType: "body", model: "taskCreateProject" },
 								{ field: "jwt", label: "Token", type: "string", paramType: "auth", model: "authToken" }
 							], response: null, status: null, duration: null },
 							{ id: "update", action: "tasks.update", rest: "/api/tasks/:id", method: "PATCH", object: "task", fields: [
@@ -645,6 +648,16 @@
 							], response: null, status: null, duration: null },
 							{ id: "remove", action: "tasks.remove", rest: "/api/tasks/:id", method: "DELETE", fields: [
 								{ field: "id", label: "Task ID", type: "string", paramType: "url", model: "taskRemoveId" },
+								{ field: "jwt", label: "Token", type: "string", paramType: "auth", model: "authToken" }
+							], response: null, status: null, duration: null },
+							{ id: "addMember", action: "tasks.addMember", rest: "/api/tasks/member/", method: "POST", fields: [
+								{ field: "id", label: "Task ID", type: "string", paramType: "body", model: "taskRemoveId" },
+								{ field: "user", label: "User ID", type: "string", paramType: "body", model: "userId" },
+								{ field: "jwt", label: "Token", type: "string", paramType: "auth", model: "authToken" }
+							], response: null, status: null, duration: null },
+							{ id: "removeMember", action: "tasks.removeMember", rest: "/api/tasks/member/", method: "DELETE", fields: [
+								{ field: "id", label: "Task ID", type: "string", paramType: "body", model: "taskRemoveId" },
+								{ field: "user", label: "User ID", type: "string", paramType: "body", model: "userId" },
 								{ field: "jwt", label: "Token", type: "string", paramType: "auth", model: "authToken" }
 							], response: null, status: null, duration: null },
 						],
@@ -709,6 +722,8 @@
 						// [TASKS SERVICE]
 						// Task Create
 						taskCreateName: "Task1",
+						taskCreateDescription: "Testiranjeee",
+						taskCreateProject: "", 
 
 						// Task Edit
 						taskId: "",

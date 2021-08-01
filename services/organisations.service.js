@@ -61,9 +61,8 @@ module.exports = {
 					address: { type: "string", min: 2 },
 					city: { type: "string", min: 2 },
 					country: { type: "string", min: 2 },
-					admins: { type: "array", items: "number", optional: true },
-					employees: { type: "array", items: "number", optional: true },
-					projects: { type: "array", items: "number", optional: true }
+					employees: { type: "array", items: "string", optional: true },
+					projects: { type: "array", items: "string", optional: true }
 				} }
 			},
 			async handler(ctx) {
@@ -140,9 +139,13 @@ module.exports = {
 				
 				let membersIdx = org.members.length;
 				while(membersIdx--) {
-					const user = await ctx.call("user.get", { id: org.members[membersIdx], getOrg: false });
-					org.members[membersIdx] = _.pickBy(user, (v, k) => {
-						return k == "firstName" || k == "lastName" || k == "role";
+					org.members[membersIdx] = await ctx.call("user.getBasicData", { id: org.members[membersIdx] });
+				}
+
+				for(let i = 0, len = org.projects.length; i < len; i++) {
+					const project = await ctx.call("projects.get", { id: org.projects[i] });
+					org.projects[i] = _.pickBy(project, (v, k) => {
+						return k == "name" || k == "budget";
 					});
 				}
 				return org;
@@ -171,7 +174,15 @@ module.exports = {
 		 */
 		remove: {
 			auth: "required",
-			rest: "DELETE /organisations/:id"
+			rest: "DELETE /organisations/:id",
+			async handler(ctx) {
+				const org = await this.getById(ctx.params.id);
+				if(!org) throw new MoleculerClientError("Organisation not found!", 404);
+
+				this.broker.emit('organisation.removed', { org: org._id });
+				this.adapter.removeById(ctx.params.id);
+				return 'Organisation deleted!';
+			}
 		},
 
 		/**
@@ -231,7 +242,6 @@ module.exports = {
 			params: {
 			},
 			async handler(ctx) {
-				await this.waitForServices(["projects"]);
 				const org = await this.adapter.findOne({ "_id": ctx.params.id });
 				if(!org) throw new MoleculerClientError("Organisation not found!", 404);
 
@@ -276,7 +286,7 @@ module.exports = {
 
 		"project.removed": {
 			async handler(payload) {
-				if(!payload) return;
+				if(!payload || !payload.org) return;
 				const org = await this.adapter.findOne({ "_id": payload.org });
 				if(!org) return;
 				
