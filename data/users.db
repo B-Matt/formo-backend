@@ -1,2 +1,1 @@
-{"firstName":"Perica","lastName":"Perić","email":"testing@example.com","password":"$2a$10$HB9M3FXIkG8mHQymNknFfuM3bdYSUM38FyuMRLGhbR87hXE4X6YC2","settings":[],"role":"admin","sex":"male","organisation":"CA0Wdu6tlagvkTyh","tasks":[],"projects":["p0Pgrvu3g6qwWawu"],"fristName":"","_id":"uWGqPxhqR97W2peg","updatedAt":{"$$date":1627832346654}}
-{"$$deleted":true,"_id":"uWGqPxhqR97W2peg"}
+{"firstName":"Perica","lastName":"Perić","email":"testing@example.com","password":"$2a$10$wjYOJX8AX66Y4t4Cjuf28.hGMfu6IX5GzFWsHun7tJBdM3GfUZSxK","settings":[],"role":"admin","sex":"male","organisation":"gKgRoVSgpEP58qsF","projects":["W1xQNgJNu2f1J8Yw"],"fristName":"","_id":"DjgeKKaLHrXijkIX","updatedAt":{"$$date":1627846127223}}

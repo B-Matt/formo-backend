@@ -306,6 +306,30 @@ module.exports = {
 				if (decoded.id) return this.getById(decoded.id);
 			}
 		},
+
+		/**
+		 * Used to check is provided user ID is valid.
+		 */
+		isCreated: {
+			rest: "GET /user/check/:id",
+			async handler(ctx) {
+				return await this.adapter.findOne({ "_id": ctx.params.id });
+			}
+		},
+
+		/**
+		 * Checks if given user authorized to access certain action.
+		 */
+		isAuthorized: {
+			rest: "GET /user/authorized/:id",
+			auth: "required",
+			params: {
+				actionRank: { type: "string" }
+			},
+			async handler(ctx) {
+				return this.isAuthorized(ctx.params.id, ctx.params.actionRank);
+			}
+		},
 	},
 
 	/**
@@ -338,7 +362,7 @@ module.exports = {
 		"project.removed": {
 			async handler(payload) {
 				if(!payload) return;
-				const user = await this.adapter.findOne({ "_id": payload.user }); // TODO: Provjeriti kako pronaći usera u arrayu projekata!
+				const user = await this.adapter.findOne({ "_id": payload.user });
 				if(!user) return;
 				
 				user.projects = user.projects.filter(p => p != payload.project);
@@ -419,6 +443,15 @@ module.exports = {
 			return _.pickBy(userOrg, (v, k) => {
 				return k == "name" || k == "address" || k == "city" || k == "country";
 			});
+		},
+
+		/**
+		 * Checks if given user authorized to access certain action.
+		 */
+		async checkIsAuthorized(id, actionRole) {
+			const user = await this.adapter.findOne({ "_id": id });
+			if(!this.validateRole(actionRole)) return false;
+			return user.role == actionRole;
 		}
 	}
 };

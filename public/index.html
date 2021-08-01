@@ -523,6 +523,7 @@
 						{ id: "orgs", caption: "Organisations service" },
 						{ id: "projects", caption: "Projects service" },
 						{ id: "tasks", caption: "Tasks service" },
+						{ id: "taskComments", caption: "Comments service" },
 						{ id: "nodes", caption: "Nodes" },
 						{ id: "services", caption: "Services" }
 					],
@@ -661,6 +662,29 @@
 								{ field: "jwt", label: "Token", type: "string", paramType: "auth", model: "authToken" }
 							], response: null, status: null, duration: null },
 						],
+						taskComments: [
+							{ id: "create", action: "task.comments.create", rest: "/api/tasks/comment", method: "POST", object: "comment", fields: [
+								{ field: "author", label: "Author ID", type: "string", paramType: "body", model: "commentAuthor" },
+								{ field: "text", label: "Comment text", type: "string", paramType: "body", model: "commentText" },
+								{ field: "task", label: "Task ID", type: "string", paramType: "body", model: "commentTaskId" },
+								{ field: "jwt", label: "Token", type: "string", paramType: "auth", model: "authToken" }
+							], response: null, status: null, duration: null },
+							{ id: "update", action: "task.comments.update", rest: "/api/tasks/comment/:id", method: "PATCH", object: "comment", fields: [
+								{ field: "id", label: "Comment ID", type: "string", paramType: "url", model: "commentId" },
+								{ field: "author", label: "Author ID", type: "string", paramType: "body", model: "commentAuthor" },
+								{ field: "text", label: "Comment text", type: "string", paramType: "body", model: "commentText" },
+								{ field: "task", label: "Task ID", type: "string", paramType: "body", model: "commentTaskId" },
+								{ field: "jwt", label: "Token", type: "string", paramType: "auth", model: "authToken" }
+							], response: null, status: null, duration: null },
+							{ id: "get", action: "task.comments.get", rest: "/api/tasks/comment/:id", method: "GET", fields: [
+								{ field: "id", label: "Comment ID", type: "string", paramType: "url", model: "commentId" },
+								{ field: "jwt", label: "Token", type: "string", paramType: "auth", model: "authToken" }
+							], response: null, status: null, duration: null },
+							{ id: "remove", action: "task.comments.remove", rest: "/api/tasks/comment/:id", method: "DELETE", fields: [
+								{ field: "id", label: "Comment ID", type: "string", paramType: "url", model: "commentId" },
+								{ field: "jwt", label: "Token", type: "string", paramType: "auth", model: "authToken" }
+							], response: null, status: null, duration: null },
+						],
 					},
 
 					fields: {
@@ -734,6 +758,12 @@
 
 						// Task Remove (Per ID)
 						taskRemoveId: "",
+
+						// [TASK COMMENTS SERVICE]
+						commentId: "",
+						commentAuthor: "",
+						commentText: "",
+						commentTaskId: "",
 					},
 
 					broker: null,

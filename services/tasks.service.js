@@ -29,6 +29,7 @@ module.exports = {
 			"dueDate",
 			"project",
 			"priority",
+			"comments",
 			"createdAt", 
 			"updatedAt"
 		],
@@ -39,6 +40,7 @@ module.exports = {
 			dueDate: { type: "date", optional: true },
 			project: { type: "string" },
 			priority: { type: "object", optional: true },
+			comments: { type: "array", optional: true }
 		},
 	},
 
@@ -73,6 +75,7 @@ module.exports = {
 						dueDate: { type: "date", optional: true },
 						project: { type: "string" },
 						priority: { type: "object", optional: true },
+						comments: { type: "array", optional: true }
 					},
 				},
 			},
@@ -81,7 +84,7 @@ module.exports = {
 				await this.validateEntity(entity);
 
 				if(entity.assignee) {
-					const isUserExisting = await ctx.call("users.isCreated", { id: entity.assignee });
+					const isUserExisting = await ctx.call("user.isCreated", { id: entity.assignee });
 					if(!isUserExisting) throw new MoleculerClientError("Provided user not found!", 404);
 				}
 
@@ -93,6 +96,7 @@ module.exports = {
 				entity.dueDate = entity.dueDate || null;
 				entity.project = entity.project || null;
 				entity.priority = entity.priority || null;
+				entity.comments = entity.comments || [];
 				entity.createdAt = new Date();
 				entity.updatedAt = new Date();
 
@@ -154,6 +158,13 @@ module.exports = {
 			async handler(ctx) {
 				const task = await this.getById(ctx.params.id);
 				if(!task) throw new MoleculerClientError("Task not found!", 404);
+				for(let i = 0, len = task.comments.length; i < len; i++) {
+					const comment = await ctx.call("task.comments.get", { id: task.comments[i], throwIfNotExist: false });
+					task.comments[i] =  _.pickBy(comment, (v, k) => {
+						return k == "author" || k == "text" || k == "updatedAt";
+					});
+				}
+
 				if(!task.assignee) return task;
 				task.assignee = await ctx.call("user.getBasicData", { id: task.assignee, throwIfNotExist: false });
 				return task;
@@ -232,7 +243,17 @@ module.exports = {
 				await this.entityChanged("updated", json, ctx);
 				return json;
 			}
-		}
+		},
+
+		/**
+		 * Used to check is provided task ID is valid.
+		 */
+		isCreated: {
+			rest: "GET /tasks/check/:id",
+			async handler(ctx) {
+				return await this.adapter.findOne({ "_id": ctx.params.id });
+			}
+		},
 	},
 
 	/**
@@ -247,6 +268,7 @@ module.exports = {
 
 				let idx = tasks.length;
 				while(idx--) {
+					this.broker.emit('task.removed', { task: tasks[idx]._id, project: payload.project });
 					this.adapter.removeById(tasks[idx]._id);
 				}
 			}
@@ -263,6 +285,31 @@ module.exports = {
 					tasks[idx].assignee = "";
 					this.adapter.updateById(tasks[idx]._id, { "$set": tasks[idx] });
 				}
+			}
+		},
+
+		"task.comment.created": {
+			async handler(payload) {
+				if(!payload) return;
+				console.log(payload)
+				const task = await this.getById(payload.task);
+				if (!task) return;
+
+				task.comments.push(payload.comment);
+				task.updatedAt = new Date();
+				await this.adapter.updateById(payload.task, { "$set": task });
+			}
+		},
+
+		"task.comment.removed": {
+			async handler(payload) {
+				if(!payload) return;
+				const task = await this.getById(payload.task);
+				if (!task) return;
+
+				task.comments = task.comments.filter(c => c != payload.comment);
+				task.updatedAt = new Date();
+				await this.adapter.updateById(payload.task, { "$set": task });
 			}
 		},
 	},
