@@ -278,8 +278,7 @@ module.exports = {
 			rest: "DELETE /user/:id",
 			auth: "required",
 			async handler(ctx) {
-				const jwtToken = jwt.decode(ctx.meta.token);
-				if(jwtToken.id != ctx.params.id) throw new MoleculerClientError("Not allowed!", 405);
+				if(ctx.meta.user._id != ctx.params.id) throw new MoleculerClientError("Not allowed!", 405);
 
 				const user = await this.getById(ctx.params.id);
 				this.broker.emit('user.removed', { user: user._id, org: user.organisation });
@@ -451,10 +450,20 @@ module.exports = {
 		/**
 		 * Checks if given user authorized to access certain action.
 		 */
-		async checkIsAuthorized(id, actionRole) {
+		async checkIsAuthorized(id, actionRoles) {
+			const roles = actionRoles.split('|');
 			const user = await this.adapter.findOne({ "_id": id });
-			if(!this.validateRole(actionRole)) return false;
-			return user.role == actionRole;
+			console.log(id, user)
+
+			let isAuthorized = false;
+			let idx = roles.length;
+			while(idx--) {
+				if(roles[idx] == user.role) {
+					isAuthorized = true;
+					break;
+				}
+			}
+			return isAuthorized;
 		}
 	}
 };

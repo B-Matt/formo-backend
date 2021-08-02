@@ -82,12 +82,10 @@ module.exports = {
 			},
 			async handler(ctx) {
 				const entity = ctx.params.project;
-				const jwtToken = jwt.decode(ctx.meta.token);
-
 				if(!ctx.params.project.organisation || ctx.params.project.organisation == "")
 					throw new MoleculerClientError("Organisation ID is not provided!", 400);
 
-				const isAuthorized = await ctx.call("user.isAuthorized", { actionRank: "admin|project_manager" });
+				const isAuthorized = await ctx.call("user.isAuthorized", { id: ctx.meta.user._id, actionRank: "admin|project_manager" });
 				if(!isAuthorized) throw new MoleculerClientError("User with that role can't use this action.", 405);
 
 				await this.validateEntity(entity);
@@ -102,13 +100,13 @@ module.exports = {
 				entity.name = entity.name || "";
 				entity.organisation = entity.organisation || "";
 				entity.budget = entity.budget || 0;
-				entity.members = entity.members || [ jwtToken.id ];
+				entity.members = entity.members || [ ctx.meta.user._id ];
 				entity.tasks = entity.tasks || [];
 				entity.createdAt = new Date();
 				entity.updatedAt = new Date();
 
 				const doc = await this.adapter.insert(entity);
-				this.broker.emit('project.created', { org: entity.organisation, project: doc._id, user: jwtToken.id });
+				this.broker.emit('project.created', { org: entity.organisation, project: doc._id, user: ctx.meta.user._id });
 				let json = await this.transformDocuments(ctx, {}, doc);
 				json = await this.transformEntity(entity);
 				await this.entityChanged("created", json, ctx);
@@ -175,7 +173,7 @@ module.exports = {
 				getMembers: { type: "boolean", optional: true }
 			},
 			async handler(ctx) {
-				const isAuthorized = await ctx.call("user.isAuthorized", { actionRank: "admin|project_manager|employee" });
+				const isAuthorized = await ctx.call("user.isAuthorized", { id: ctx.meta.user._id, actionRank: "admin|project_manager|employee" });
 				if(!isAuthorized) throw new MoleculerClientError("User with that role can't use this action.", 405);
 
 				const project = await this.getById(ctx.params.id);
@@ -211,7 +209,7 @@ module.exports = {
 			rest: "DELETE /projects/:id",
 			auth: "required",
 			async handler(ctx) {
-				const isAuthorized = await ctx.call("user.isAuthorized", { actionRank: "admin|project_manager" });
+				const isAuthorized = await ctx.call("user.isAuthorized", { id: ctx.meta.user._id, actionRank: "admin|project_manager" });
 				if(!isAuthorized) throw new MoleculerClientError("User with that role can't use this action.", 405);
 				
 				const project = await this.getById(ctx.params.id);

@@ -69,7 +69,7 @@ module.exports = {
 				const entity = ctx.params.organisation;
 				await this.validateEntity(entity);
 
-				const isAuthorized = await ctx.call("user.isAuthorized", { actionRank: "admin" });
+				const isAuthorized = await ctx.call("user.isAuthorized", { id: ctx.meta.user._id, actionRank: "admin" });
 				if(!isAuthorized) throw new MoleculerClientError("User with that role can't use this action.", 405);
 
 				if(entity.name) {
@@ -121,7 +121,7 @@ module.exports = {
 				const org = await this.adapter.findOne({ "_id": ctx.params.id });
 				if(!org) throw new MoleculerClientError("Organisation not found!", 404);
 				
-				const isAuthorized = await ctx.call("user.isAuthorized", { actionRank: "admin" });
+				const isAuthorized = await ctx.call("user.isAuthorized", { id: ctx.meta.user._id, actionRank: "admin" });
 				if(!isAuthorized) throw new MoleculerClientError("User with that role can't use this action.", 405);
 				newData.updatedAt = new Date();
 
@@ -184,7 +184,7 @@ module.exports = {
 				const org = await this.getById(ctx.params.id);
 				if(!org) throw new MoleculerClientError("Organisation not found!", 404);
 
-				const isAuthorized = await ctx.call("user.isAuthorized", { actionRank: "admin" });
+				const isAuthorized = await ctx.call("user.isAuthorized", { id: ctx.meta.user._id, actionRank: "admin" });
 				if(!isAuthorized) throw new MoleculerClientError("User with that role can't use this action.", 405);
 
 				this.broker.emit('organisation.removed', { org: org._id });
@@ -210,7 +210,7 @@ module.exports = {
 				if(!org) throw new MoleculerClientError("Organisation not found!", 404);
 				if(org.members.indexOf(ctx.params.organisation.user) != -1) throw new MoleculerClientError("User is already member of this organisation!", 409);
 
-				const isAuthorized = await ctx.call("user.isAuthorized", { actionRank: "admin" });
+				const isAuthorized = await ctx.call("user.isAuthorized", { id: ctx.meta.user._id, actionRank: "admin" });
 				if(!isAuthorized) throw new MoleculerClientError("User with that role can't use this action.", 405);
 
 				org.members.push(ctx.params.organisation.user);
@@ -238,7 +238,7 @@ module.exports = {
 				if(!org) throw new MoleculerClientError("Organisation not found!", 404);
 				if(org.members.indexOf(ctx.params.organisation.user) == -1) throw new MoleculerClientError("User is not member of this organisation!", 400);
 
-				const isAuthorized = await ctx.call("user.isAuthorized", { actionRank: "admin" });
+				const isAuthorized = await ctx.call("user.isAuthorized", { id: ctx.meta.user._id, actionRank: "admin" });
 				if(!isAuthorized) throw new MoleculerClientError("User with that role can't use this action.", 405);
 
 				org.members = org.members.filter(m => m != ctx.params.organisation.user);

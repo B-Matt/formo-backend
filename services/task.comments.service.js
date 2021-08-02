@@ -71,7 +71,7 @@ module.exports = {
 				const entity = ctx.params.comment;
 				await this.validateEntity(entity);
 
-				const isAuthorized = await ctx.call("user.isAuthorized", { actionRank: "admin|project_manager|employee" });
+				const isAuthorized = await ctx.call("user.isAuthorized", { id: ctx.meta.user._id, actionRank: "admin|project_manager|employee" });
 				if(!isAuthorized) throw new MoleculerClientError("User with that role can't use this action.", 405);
 
 				if(entity.author) {
@@ -126,7 +126,7 @@ module.exports = {
 				const comment = await this.adapter.findOne({ _id: ctx.params.id });
 				if (!comment) throw new MoleculerClientError("Task comment not found!", 404);
 
-				const isAuthorized = await ctx.call("user.isAuthorized", { actionRank: "admin|project_manager" });
+				const isAuthorized = await ctx.call("user.isAuthorized", { id: ctx.meta.user._id, actionRank: "admin|project_manager" });
 				if(!isAuthorized) throw new MoleculerClientError("User with that role can't use this action.", 405);
 				
 				newData.updatedAt = new Date();
@@ -145,7 +145,7 @@ module.exports = {
 			rest: "GET /tasks/comment/:id",
 			auth: "required",
 			async handler(ctx) {
-				const isAuthorized = await ctx.call("user.isAuthorized", { actionRank: "admin|project_manager|employee" });
+				const isAuthorized = await ctx.call("user.isAuthorized", { id: ctx.meta.user._id, actionRank: "admin|project_manager|employee" });
 				if(!isAuthorized) throw new MoleculerClientError("User with that role can't use this action.", 405);
 
 				const comment = await this.getById(ctx.params.id);
@@ -162,7 +162,7 @@ module.exports = {
 			rest: "DELETE /tasks/comment/:id",
 			auth: "required",
 			async handler(ctx) {
-				const isAuthorized = await ctx.call("user.isAuthorized", { actionRank: "admin|project_manager|employee" });
+				const isAuthorized = await ctx.call("user.isAuthorized", { id: ctx.meta.user._id, actionRank: "admin|project_manager|employee" });
 				if(!isAuthorized) throw new MoleculerClientError("User with that role can't use this action.", 405);
 
 				const comment = await this.getById(ctx.params.id);
