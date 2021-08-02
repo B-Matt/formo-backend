@@ -83,6 +83,9 @@ module.exports = {
 				const entity = ctx.params.task;
 				await this.validateEntity(entity);
 
+				const isAuthorized = await ctx.call("user.isAuthorized", { actionRank: "admin|project_manager" });
+				if(!isAuthorized) throw new MoleculerClientError("User with that role can't use this action.", 405);
+
 				if(entity.assignee) {
 					const isUserExisting = await ctx.call("user.isCreated", { id: entity.assignee });
 					if(!isUserExisting) throw new MoleculerClientError("Provided user not found!", 404);
@@ -135,12 +138,14 @@ module.exports = {
 				},
 			},
 			async handler(ctx) {
-				const newData = ctx.params.task;
-				newData.updatedAt = new Date();
-
+				const newData = ctx.params.task;				
 				const task = await this.adapter.findOne({ _id: ctx.params.id });
 				if (!task) throw new MoleculerClientError("Task not found!", 404);
 
+				const isAuthorized = await ctx.call("user.isAuthorized", { actionRank: "admin|project_manager|employee" });
+				if(!isAuthorized) throw new MoleculerClientError("User with that role can't use this action.", 405);
+				
+				newData.updatedAt = new Date();
 				const doc = await this.adapter.updateById(ctx.params.id, { $set: newData });
 				const entity = await this.transformDocuments(ctx, {}, doc);
 				const json = await this.transformEntity(entity);
@@ -158,6 +163,10 @@ module.exports = {
 			async handler(ctx) {
 				const task = await this.getById(ctx.params.id);
 				if(!task) throw new MoleculerClientError("Task not found!", 404);
+
+				const isAuthorized = await ctx.call("user.isAuthorized", { actionRank: "admin|project_manager|employee" });
+				if(!isAuthorized) throw new MoleculerClientError("User with that role can't use this action.", 405);
+
 				for(let i = 0, len = task.comments.length; i < len; i++) {
 					const comment = await ctx.call("task.comments.get", { id: task.comments[i], throwIfNotExist: false });
 					task.comments[i] =  _.pickBy(comment, (v, k) => {
@@ -187,6 +196,9 @@ module.exports = {
 			async handler(ctx) {
 				const task = await this.getById(ctx.params.id);
 				if(!task) throw new MoleculerClientError("Task not found!", 404);
+
+				const isAuthorized = await ctx.call("user.isAuthorized", { actionRank: "admin|project_manager" });
+				if(!isAuthorized) throw new MoleculerClientError("User with that role can't use this action.", 405);
 
 				this.broker.emit('task.removed', { task: task._id, project: task.project });
 				this.adapter.removeById(ctx.params.id);

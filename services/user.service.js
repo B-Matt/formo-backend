@@ -278,6 +278,9 @@ module.exports = {
 			rest: "DELETE /user/:id",
 			auth: "required",
 			async handler(ctx) {
+				const jwtToken = jwt.decode(ctx.meta.token);
+				if(jwtToken.id != ctx.params.id) throw new MoleculerClientError("Not allowed!", 405);
+
 				const user = await this.getById(ctx.params.id);
 				this.broker.emit('user.removed', { user: user._id, org: user.organisation });
 				this.adapter.removeById(ctx.params.id);
@@ -327,7 +330,7 @@ module.exports = {
 				actionRank: { type: "string" }
 			},
 			async handler(ctx) {
-				return this.isAuthorized(ctx.params.id, ctx.params.actionRank);
+				return await this.checkIsAuthorized(ctx.params.id, ctx.params.actionRank);
 			}
 		},
 	},

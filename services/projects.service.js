@@ -87,6 +87,9 @@ module.exports = {
 				if(!ctx.params.project.organisation || ctx.params.project.organisation == "")
 					throw new MoleculerClientError("Organisation ID is not provided!", 400);
 
+				const isAuthorized = await ctx.call("user.isAuthorized", { actionRank: "admin|project_manager" });
+				if(!isAuthorized) throw new MoleculerClientError("User with that role can't use this action.", 405);
+
 				await this.validateEntity(entity);
 				await this.waitForServices(["organisations"]);
 
@@ -172,6 +175,9 @@ module.exports = {
 				getMembers: { type: "boolean", optional: true }
 			},
 			async handler(ctx) {
+				const isAuthorized = await ctx.call("user.isAuthorized", { actionRank: "admin|project_manager|employee" });
+				if(!isAuthorized) throw new MoleculerClientError("User with that role can't use this action.", 405);
+
 				const project = await this.getById(ctx.params.id);
 				if(!project) throw new MoleculerClientError("Project not found!", 404);				
 				for(let i = 0, len = project.tasks.length; i < len; i++) {
@@ -205,6 +211,9 @@ module.exports = {
 			rest: "DELETE /projects/:id",
 			auth: "required",
 			async handler(ctx) {
+				const isAuthorized = await ctx.call("user.isAuthorized", { actionRank: "admin|project_manager" });
+				if(!isAuthorized) throw new MoleculerClientError("User with that role can't use this action.", 405);
+				
 				const project = await this.getById(ctx.params.id);
 				this.broker.emit('project.removed', { project: project._id, org: project.organisation });
 				this.adapter.removeById(ctx.params.id);

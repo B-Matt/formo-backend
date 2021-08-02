@@ -71,6 +71,9 @@ module.exports = {
 				const entity = ctx.params.comment;
 				await this.validateEntity(entity);
 
+				const isAuthorized = await ctx.call("user.isAuthorized", { actionRank: "admin|project_manager|employee" });
+				if(!isAuthorized) throw new MoleculerClientError("User with that role can't use this action.", 405);
+
 				if(entity.author) {
 					const isUserExisting = await ctx.call("user.isCreated", { id: entity.author });
 					if(!isUserExisting) throw new MoleculerClientError("Provided user not found!", 404);
@@ -119,12 +122,14 @@ module.exports = {
 				},
 			},
 			async handler(ctx) {
-				const newData = ctx.params.comment;
-				newData.updatedAt = new Date();
-
+				const newData = ctx.params.comment;				
 				const comment = await this.adapter.findOne({ _id: ctx.params.id });
 				if (!comment) throw new MoleculerClientError("Task comment not found!", 404);
 
+				const isAuthorized = await ctx.call("user.isAuthorized", { actionRank: "admin|project_manager" });
+				if(!isAuthorized) throw new MoleculerClientError("User with that role can't use this action.", 405);
+				
+				newData.updatedAt = new Date();
 				const doc = await this.adapter.updateById(ctx.params.id, { $set: newData });
 				const entity = await this.transformDocuments(ctx, {}, doc);
 				const json = await this.transformEntity(entity);
@@ -140,6 +145,9 @@ module.exports = {
 			rest: "GET /tasks/comment/:id",
 			auth: "required",
 			async handler(ctx) {
+				const isAuthorized = await ctx.call("user.isAuthorized", { actionRank: "admin|project_manager|employee" });
+				if(!isAuthorized) throw new MoleculerClientError("User with that role can't use this action.", 405);
+
 				const comment = await this.getById(ctx.params.id);
 				if(!comment) throw new MoleculerClientError("Task comment not found!", 404);
 				comment.author = await ctx.call("user.getBasicData", { id: comment.author, throwIfNotExist: false });
@@ -154,6 +162,9 @@ module.exports = {
 			rest: "DELETE /tasks/comment/:id",
 			auth: "required",
 			async handler(ctx) {
+				const isAuthorized = await ctx.call("user.isAuthorized", { actionRank: "admin|project_manager|employee" });
+				if(!isAuthorized) throw new MoleculerClientError("User with that role can't use this action.", 405);
+
 				const comment = await this.getById(ctx.params.id);
 				if(!comment) throw new MoleculerClientError("Task comment not found!", 404);
 
