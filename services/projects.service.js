@@ -24,6 +24,7 @@ module.exports = {
 		rest: "/",
 		fields: [
 			"_id",
+			"color",
 			"name",
 			"organisation",
 			"budget",
@@ -32,6 +33,7 @@ module.exports = {
 		],
 		entityValidator: {
 			name: { type: "string", min: 2 },
+			color: { type: "string", min: 2 },
 			organisation: { type: "string", min: 2 },
 			budget: { type: "number", optional: true },
 			members: { type: "array", items: "string", optional: true },
@@ -65,6 +67,7 @@ module.exports = {
 					type: "object",
 					props: {
 						name: { type: "string", min: 1 },
+						color: { type: "string", min: 2 },
 						organisation: { type: "string" },
 						budget: { type: "number" },
 						members: {
@@ -98,6 +101,7 @@ module.exports = {
 				if(!userOrg) throw new MoleculerClientError("Provided organisation not found!", 404);
 
 				entity.name = entity.name || "";
+				entity.color = entity.color || "";
 				entity.organisation = entity.organisation || "";
 				entity.budget = entity.budget || 0;
 				entity.members = entity.members || [ ctx.meta.user._id ];
