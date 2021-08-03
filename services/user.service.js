@@ -1,13 +1,18 @@
 "use strict";
 
 const _ = require('lodash');
+const crypto = require("crypto");
 const jwt = require("jsonwebtoken");
 const { MoleculerClientError } = require("moleculer").Errors;
 const bcrypt = require("bcryptjs");
+const C = require("../constants");
 
 // Database Mixins
 const DbService = require("../mixins/db.mixin");
 const CacheCleanerMixin = require("../mixins/cache.cleaner.mixin");
+
+// Constants
+const TOKEN_EXPIRATION = 60 * 60 * 1000; // 1 hour
 
 /**
  * @typedef {import('moleculer').Context} Context Moleculer's Context
@@ -29,13 +34,16 @@ module.exports = {
 		entityValidator: {
 			firstName: { type: "string", min: 2 },
 			lastName: { type: "string", min: 2 },
-			password: { type: "string", min: 6 },
+			password: { type: "string", min: 6, optional: true },
 			email: { type: "email" },
 			role: { type: "string", min: 2 },
 			sex: { type: "string", optional: true },
 			organisation: { type: "string", optional: true },
 			projects: { type: "array", items: "string", optional: true },
 			settings: { type: "array", items: "object" }
+		},
+		actions: {
+			sendMail: "v1.mail.send"
 		},
 	},
 
@@ -135,9 +143,10 @@ module.exports = {
 					throw new MoleculerClientError("Invalid role ID", 400);
 				}
 
+				const password = crypto.randomBytes(6).toString('hex')
 				user.firstName = user.fistName || "";
 				user.lastName = user.lastName || "";
-				user.password = bcrypt.hashSync(user.password, 10);
+				user.password = bcrypt.hashSync(password, 10);
 				user.role = user.role || "admin";
 				user.sex = user.sex || "male";
 				user.organisation = user.organisation || "";
@@ -148,6 +157,25 @@ module.exports = {
 				const transDoc = await this.transformDocuments(ctx, {}, doc);
 				const json = await this.transformEntity(transDoc, true, ctx.meta.token);
 				await this.entityChanged("created", json, ctx);
+
+				// Send verification
+				const token = await this.generateToken(
+					C.TOKEN_TYPE_VERIFICATION,
+					json.user._id,
+					TOKEN_EXPIRATION
+				);
+
+				const mailText = {
+					title: "Welcome to Formo.com",
+					text: `
+						Hello <i>${user.firstName} ${user.lastName}</i>,<br>
+						someone registered account on Formo.com using this e-mail.<br><br>
+						Please click on the link down below and use this password to login: <b>${password}</b><br><br>
+						${ctx.meta.url}verify-account?token=${token}
+					`
+				};
+
+				this.sendMail(ctx, json.user, mailText);
 				return json;
 			}
 		},
@@ -284,6 +312,70 @@ module.exports = {
 				this.broker.emit('user.removed', { user: user._id, org: user.organisation, oldNick: `${user.firstName} ${user.lastName}` });
 				this.adapter.removeById(ctx.params.id);
 				return 'User deleted!';
+			}
+		},
+
+		/**
+		 * Start "forgot password" process
+		 */
+		forgotPassword: {
+			params: {
+				email: { type: "email" }
+			},
+			rest: "POST /forgot-password",
+			async handler(ctx) {
+				const token = this.generateToken();
+				const email = ctx.params.email;
+				const user = await this.adapter.findOne({ email });
+				if (!user) throw new MoleculerClientError("Email is not registered.", 404);
+
+				await this.adapter.updateById(user._id, {
+					$set: {
+						resetToken: token,
+						resetTokenExpires: Date.now() + 3600 * 1000 // 1 hour
+					}
+				});
+
+				const mailText = {
+					title: "Welcome to Formo.com",
+					text: `
+						Hello <i>${user.firstName} ${user.lastName}</i>,<br>
+						someone requested password reset.<br><br>
+						Please click on the <a href="${ctx.meta.url}reset-password?token=${token}">link</a> to reset your password.
+					`
+				};
+				this.sendMail(ctx, user, mailText);
+				return true;
+			}
+		},
+
+		/**
+		 * Reset password
+		 */
+		resetPassword: {
+			params: {
+				token: { type: "string" },
+				password: { type: "string", min: 8 }
+			},
+			rest: "POST /reset-password",
+			async handler(ctx) {
+				const user = await this.adapter.findOne({ resetToken: ctx.params.token });
+				if (!user) throw new MoleculerClientError("Invalid token!", 400);
+				if (user.resetTokenExpires < Date.now()) throw new MoleculerClientError("Token expired!", 400);
+
+				// Change the password
+				await this.adapter.updateById(user._id, {
+					$set: {
+						password: await bcrypt.hash(ctx.params.password, 10),
+						passwordless: false,
+						verified: true,
+						resetToken: null,
+						resetTokenExpires: null
+					}
+				});
+
+				const doc = await this.transformDocuments(ctx, {}, user);
+				return await this.transformEntity(doc, true, ctx.meta.token);
 			}
 		},
 
@@ -467,6 +559,42 @@ module.exports = {
 				}
 			}
 			return isAuthorized;
-		}
+		},
+
+		/**
+		 * Generate a token for user
+		 *
+		 * @param {String} type
+		 * @param {String} owner
+		 * @param {Number?} expiration
+		 */
+		async generateToken(type, owner, expiration) {
+			const res = await this.broker.call("tokens.generate", {
+				type: type,
+				owner: owner,
+				expiry: expiration ? Date.now() + expiration : null
+			});
+
+			return res.token;
+		},
+
+		/**
+		 * Send email to the user email address
+		 *
+		 * @param {Context} ctx
+		 * @param {Object} user
+		 * @param {String} template
+		 */
+		async sendMail(ctx, user, template) {
+			return await ctx.call(
+				this.settings.actions.sendMail, {
+					from: "no-reply@formo.com",
+					to: user.email,
+					subject: template.title,
+					html: template.text
+				},
+				{ retries: 3, timeout: 10 * 1000 }
+			);
+		},
 	}
 };

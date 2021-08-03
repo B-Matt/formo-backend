@@ -74,7 +74,6 @@ module.exports = {
 					if(isNameExists) throw new MoleculerClientError("Organisation with that name already exists!", 422);
 				}
 
-				entity.admins = entity.admins || [];
 				entity.members = entity.members || [];
 				entity.projects = entity.projects || [];
 				entity.createdAt = new Date();

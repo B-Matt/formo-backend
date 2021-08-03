@@ -1,7 +1,6 @@
 "use strict";
 
 const _ = require('lodash');
-const jwt = require("jsonwebtoken");
 const { MoleculerClientError } = require("moleculer").Errors;
 const DbService = require("../mixins/db.mixin");
 const CacheCleanerMixin = require("../mixins/cache.cleaner.mixin");
@@ -133,6 +132,7 @@ module.exports = {
 					type: "object",
 					props: {
 						name: { type: "string", min: 1 },
+						color: { type: "string", min: 1 },
 						organisation: { type: "number" },
 						budget: { type: "number" },
 						members: {

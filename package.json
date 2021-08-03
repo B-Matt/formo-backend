@@ -26,11 +26,13 @@
     "moleculer-repl": "^0.6.4"
   },
   "dependencies": {
+    "cron": "^1.8.2",
     "jsonwebtoken": "^8.5.1",
     "lodash": "^4.17.21",
     "moleculer": "^0.14.13",
     "moleculer-db": "^0.8.4",
     "moleculer-db-adapter-mongo": "^0.4.7",
+    "moleculer-mail": "^1.2.5",
     "moleculer-web": "^0.9.1",
     "nats": "^1.4.12"
   },
