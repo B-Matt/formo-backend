@@ -69,9 +69,6 @@ module.exports = {
 				const entity = ctx.params.organisation;
 				await this.validateEntity(entity);
 
-				const isAuthorized = await ctx.call("user.isAuthorized", { id: ctx.meta.user._id, actionRank: "admin" });
-				if(!isAuthorized) throw new MoleculerClientError("User with that role can't use this action.", 405);
-
 				if(entity.name) {
 					const isNameExists = await this.adapter.findOne({ name: entity.name });
 					if(isNameExists) throw new MoleculerClientError("Organisation with that name already exists!", 422);
@@ -209,9 +206,6 @@ module.exports = {
 				const org = await this.adapter.findOne({ "_id": ctx.params.organisation.id });
 				if(!org) throw new MoleculerClientError("Organisation not found!", 404);
 				if(org.members.indexOf(ctx.params.organisation.user) != -1) throw new MoleculerClientError("User is already member of this organisation!", 409);
-
-				const isAuthorized = await ctx.call("user.isAuthorized", { id: ctx.meta.user._id, actionRank: "admin" });
-				if(!isAuthorized) throw new MoleculerClientError("User with that role can't use this action.", 405);
 
 				org.members.push(ctx.params.organisation.user);
 				org.updatedAt = new Date();

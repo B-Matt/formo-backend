@@ -873,6 +873,7 @@
 						}
 					}
 
+					console.log(url);
 					return fetch(url, {
 						method,
 						body: object && !_.isEmpty(object) ? JSON.stringify(object) : body ? JSON.stringify(body) : null,

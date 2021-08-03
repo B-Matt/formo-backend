@@ -30,6 +30,7 @@ module.exports = {
 			"project",
 			"priority",
 			"comments",
+			"attachments",
 			"createdAt", 
 			"updatedAt"
 		],
@@ -40,7 +41,8 @@ module.exports = {
 			dueDate: { type: "date", optional: true },
 			project: { type: "string" },
 			priority: { type: "object", optional: true },
-			comments: { type: "array", optional: true }
+			comments: { type: "array", optional: true },
+			attachments: { type: "array", optional: true }
 		},
 	},
 
@@ -100,6 +102,7 @@ module.exports = {
 				entity.project = entity.project || null;
 				entity.priority = entity.priority || null;
 				entity.comments = entity.comments || [];
+				entity.attachments = entity.attachments || [];
 				entity.createdAt = new Date();
 				entity.updatedAt = new Date();
 
@@ -138,14 +141,12 @@ module.exports = {
 				},
 			},
 			async handler(ctx) {
-				const newData = ctx.params.task;				
+				const newData = ctx.params.task;
+				newData.updatedAt = new Date();
+
 				const task = await this.adapter.findOne({ _id: ctx.params.id });
 				if (!task) throw new MoleculerClientError("Task not found!", 404);
 
-				const isAuthorized = await ctx.call("user.isAuthorized", { id: ctx.meta.user._id, actionRank: "admin|project_manager|employee" });
-				if(!isAuthorized) throw new MoleculerClientError("User with that role can't use this action.", 405);
-				
-				newData.updatedAt = new Date();
 				const doc = await this.adapter.updateById(ctx.params.id, { $set: newData });
 				const entity = await this.transformDocuments(ctx, {}, doc);
 				const json = await this.transformEntity(entity);
@@ -163,15 +164,15 @@ module.exports = {
 			async handler(ctx) {
 				const task = await this.getById(ctx.params.id);
 				if(!task) throw new MoleculerClientError("Task not found!", 404);
-
-				const isAuthorized = await ctx.call("user.isAuthorized", { id: ctx.meta.user._id, actionRank: "admin|project_manager|employee" });
-				if(!isAuthorized) throw new MoleculerClientError("User with that role can't use this action.", 405);
-
 				for(let i = 0, len = task.comments.length; i < len; i++) {
 					const comment = await ctx.call("task.comments.get", { id: task.comments[i], throwIfNotExist: false });
 					task.comments[i] =  _.pickBy(comment, (v, k) => {
 						return k == "author" || k == "text" || k == "updatedAt";
 					});
+				}
+
+				for(let i = 0, len = task.attachments.length; i < len; i++) {
+					task.attachments[i] = `${ctx.meta.url}upload/${task._id}/${task.attachments[i]}`;
 				}
 
 				if(!task.assignee) return task;
@@ -320,6 +321,31 @@ module.exports = {
 				if (!task) return;
 
 				task.comments = task.comments.filter(c => c != payload.comment);
+				task.updatedAt = new Date();
+				await this.adapter.updateById(payload.task, { "$set": task });
+			}
+		},
+
+		"task.attachment.uploaded": {
+			async handler(payload) {
+				if(!payload) return;
+				const task = await this.getById(payload.task);
+				if (!task) return;
+
+				task.attachments.push(payload.file);
+				task.updatedAt = new Date();
+				await this.adapter.updateById(payload.task, { "$set": task });
+			}
+		},
+
+		"task.attachment.removed": {
+			async handler(payload) {
+				if(!payload) return;
+				const task = await this.getById(payload.task);
+				console.log(payload, task);
+				if (!task) return;
+
+				task.attachments = task.attachments.filter(c => c != payload.file);
 				task.updatedAt = new Date();
 				await this.adapter.updateById(payload.task, { "$set": task });
 			}

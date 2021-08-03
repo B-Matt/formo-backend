@@ -70,6 +70,67 @@ module.exports = {
 
 				// Enable/disable logging
 				logging: true
+			},
+			{
+				path: "/upload",
+
+				aliases: {
+                    "POST /": "multipart:task.attachments.save",
+                    "PUT /": "stream:task.attachments.save",
+                    "PUT /:id": "stream:task.attachments.save",
+                    "POST /file/:id": {
+                        type: "multipart",
+                        busboyConfig: {
+							limits: {
+								files: 1
+							},
+							onPartsLimit(busboy, alias, svc) {
+								this.logger.info("Busboy parts limit!", busboy);
+							},
+							onFilesLimit(busboy, alias, svc) {
+								this.logger.info("Busboy file limit!", busboy);
+							},
+							onFieldsLimit(busboy, alias, svc) {
+								this.logger.info("Busboy fields limit!", busboy);
+							}
+						},
+						action: "task.attachments.save"
+                    },
+                    "POST /files": {
+						type: "multipart",
+						busboyConfig: {
+							limits: {
+								files: 3,
+								fileSize: 1 * 1024 * 1024
+							},
+							onPartsLimit(busboy, alias, svc) {
+								this.logger.info("Busboy parts limit!", busboy);
+							},
+							onFilesLimit(busboy, alias, svc) {
+								this.logger.info("Busboy file limit!", busboy);
+							},
+							onFieldsLimit(busboy, alias, svc) {
+								this.logger.info("Busboy fields limit!", busboy);
+							}
+						},
+						action: "task.attachments.save"
+					},
+					"GET /:task/:file": "task.attachments.get",
+					"DELETE /:task/:file": "task.attachments.remove"
+                },
+
+				bodyParsers: {
+                    json: false,
+                    urlencoded: false
+                },
+
+				busboyConfig: {
+					limits: {
+						files: 1
+					}
+				},
+
+				mappingPolicy: "restrict"
 			}
 		],
 
@@ -134,6 +195,7 @@ module.exports = {
 				if (req.$action.auth == "required" && !user) return Promise.reject(new UnAuthorizedError(ERR_INVALID_TOKEN));
 				ctx.meta.user = user;
 				ctx.meta.token = token;
+				ctx.meta.url = req.headers.referer;
 			}
 			
 			if (req.$action.auth == "required" && !user)

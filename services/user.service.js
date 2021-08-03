@@ -224,7 +224,6 @@ module.exports = {
 					user.organisation = await this.getUserOrganisation(ctx, user.organisation);
 				}
 
-				console.log(user);
 				for(let i = 0, len = user.projects.length; i < len; i++) {
 					const project = await ctx.call("projects.get", { id: user.projects[i] });
 					user.projects[i] = _.pickBy(project, (v, k) => {
@@ -245,7 +244,7 @@ module.exports = {
 				const user = await this.getById(ctx.params.id);
 				if(!user) throw new MoleculerClientError("User not found!", 404);
 				return _.pickBy(user, (v, k) => {
-					return k == "firstName" || k == "lastName" || k == "role" || k == "sex";
+					return k == "_id" || k == "firstName" || k == "lastName" || k == "role";
 				});
 			}
 		},
@@ -443,7 +442,7 @@ module.exports = {
 		async getUserOrganisation(ctx, organisation) {
 			const userOrg = await ctx.call("organisations.get", { id: organisation });
 			return _.pickBy(userOrg, (v, k) => {
-				return k == "name" || k == "address" || k == "city" || k == "country";
+				return k == "name" || k == "address" || k == "city" || k == "country" || k == "_id";
 			});
 		},
 
@@ -453,7 +452,7 @@ module.exports = {
 		async checkIsAuthorized(id, actionRoles) {
 			const roles = actionRoles.split('|');
 			const user = await this.adapter.findOne({ "_id": id });
-			console.log(id, user)
+			if(!user) return;
 
 			let isAuthorized = false;
 			let idx = roles.length;

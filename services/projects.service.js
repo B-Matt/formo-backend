@@ -187,7 +187,7 @@ module.exports = {
 
 				if(ctx.params.getOrg == undefined || ctx.params.getOrg) {
 					return project;
-				}
+				} // TODO: NE RADI OVO?!!
 				for(let i = 0, len = project.members.length; i < len; i++) {
 					project.members[i] = await ctx.call("user.getBasicData", { id: project.members[i] });
 				}
