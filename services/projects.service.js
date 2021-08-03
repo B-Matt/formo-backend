@@ -170,7 +170,6 @@ module.exports = {
 			rest: "GET /projects/:id",
 			auth: "required",
 			params: {
-				getMembers: { type: "boolean", optional: true }
 			},
 			async handler(ctx) {
 				const isAuthorized = await ctx.call("user.isAuthorized", { id: ctx.meta.user._id, actionRank: "admin|project_manager|employee" });
@@ -179,15 +178,11 @@ module.exports = {
 				const project = await this.getById(ctx.params.id);
 				if(!project) throw new MoleculerClientError("Project not found!", 404);				
 				for(let i = 0, len = project.tasks.length; i < len; i++) {
-					const task = await ctx.call("tasks.get", { id: project.tasks[i] });
+					const task = await ctx.call("tasks.get", { id: project.tasks[i], throwIfNotExist: false });
 					project.tasks[i] = _.pickBy(task, (v, k) => {
-						return k == "name" || k == "description" || k == "assignee" || k == "dueDate" || k == "project" || k == "priority";						
+						return k == "name" || k == "description" || k == "assignee" || k == "dueDate" || k == "priority";						
 					});
 				}
-
-				if(ctx.params.getOrg == undefined || ctx.params.getOrg) {
-					return project;
-				} // TODO: NE RADI OVO?!!
 				for(let i = 0, len = project.members.length; i < len; i++) {
 					project.members[i] = await ctx.call("user.getBasicData", { id: project.members[i] });
 				}
@@ -213,6 +208,8 @@ module.exports = {
 				if(!isAuthorized) throw new MoleculerClientError("User with that role can't use this action.", 405);
 				
 				const project = await this.getById(ctx.params.id);
+				if(!project) throw new MoleculerClientError("Project not found!", 404);
+	
 				this.broker.emit('project.removed', { project: project._id, org: project.organisation });
 				this.adapter.removeById(ctx.params.id);
 				return 'Project deleted!';

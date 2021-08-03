@@ -363,12 +363,15 @@ module.exports = {
 		"project.removed": {
 			async handler(payload) {
 				if(!payload) return;
-				const user = await this.adapter.findOne({ "_id": payload.user });
-				if(!user) return;
-				
-				user.projects = user.projects.filter(p => p != payload.project);
-				user.updatedAt = new Date();
-				await this.adapter.updateById(payload.user, { "$set": user });
+				const users = await this.adapter.find({ query: { projects: payload.project } });
+				if(!users) return;
+
+				let idx = users.length;
+				while(idx--) {
+					users[idx].projects = users[idx].projects.filter(p => p != payload.project);
+					users[idx].updatedAt = new Date();
+					await this.adapter.updateById(users[idx]._id, { "$set": users[idx] });
+				}
 			}
 		},
 

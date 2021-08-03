@@ -97,7 +97,7 @@ module.exports = {
 
 				fs.readdir(filePath, (err, files) => {
 					files.forEach(file => {
-						fs.unlink(`${filePath}/${file}`);
+						fs.unlink(`${filePath}/${file}`, (err) => console.log(err));
 					});
 				});
 				fs.rm(filePath, { recursive: true, force: true }, (err) => console.log(err));
