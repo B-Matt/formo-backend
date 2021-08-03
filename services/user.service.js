@@ -36,7 +36,7 @@ module.exports = {
 			lastName: { type: "string", min: 2 },
 			password: { type: "string", min: 6, optional: true },
 			email: { type: "email" },
-			role: { type: "string", min: 2 },
+			role: { type: "enum", values: C.USER_ROLES, },
 			sex: { type: "string", optional: true },
 			organisation: { type: "string", optional: true },
 			projects: { type: "array", items: "string", optional: true },
@@ -106,8 +106,9 @@ module.exports = {
 				}
 				const newOrg = await ctx.call("organisations.create", { organisation: ctx.params.org, throwIfNotExist: true });
 				
+				user.role = C.USER_ROLE_ADMIN;
 				user.organisation = newOrg._id.toString();
-				const newUser = await this.broker.call("user.create", { user: user });
+				const newUser = await this.broker.call("user.create", { user: user });				
 
 				const params = { organisation: { id: user.organisation, user: newUser.user._id.toString() }};
 				await this.broker.call("organisations.addMember", params);
@@ -139,15 +140,11 @@ module.exports = {
 					if(isEmailExists) throw new MoleculerClientError("User with that e-mail already exists!", 422);
 				}
 
-				if(!this.validateRole(user.role)) {
-					throw new MoleculerClientError("Invalid role ID", 400);
-				}
-
-				const password = crypto.randomBytes(6).toString('hex')
+				const password = Math.random().toString(36).slice(2);
 				user.firstName = user.fistName || "";
 				user.lastName = user.lastName || "";
 				user.password = bcrypt.hashSync(password, 10);
-				user.role = user.role || "admin";
+				user.role = user.role || C.USER_ROLE_EMPLOYEE;
 				user.sex = user.sex || "male";
 				user.organisation = user.organisation || "";
 				user.projects = user.projects || [];
@@ -517,17 +514,6 @@ module.exports = {
 				user.token = token || this.generateJWT(user);
 			}
 			return { user };
-		},
-		
-		/**
-		 * Validates inputed role.
-		 * 
-		 * @param {*} role 
-		 * @returns 
-		 */
-		validateRole(role) {
-			const roles = ["admin", "project_manager", "employee"];
-			return roles.includes(role);
 		},
 
 		/**

@@ -1,21 +1,14 @@
 "use strict";
 
 const C = {
-	STATUS_ACTIVE: 1,
-	STATUS_INACTIVE: 0,
-	STATUS_DELETED: -1,
+	USER_ROLE_ADMIN: "admin", 
+	USER_ROLE_PM: "project_manager", 
+	USER_ROLE_EMPLOYEE: "employee",
 
-	ROLE_SYSTEM: "$system",
-	ROLE_EVERYONE: "$everyone",
-	ROLE_AUTHENTICATED: "$authenticated",
-	ROLE_MEMBER: "$member",
-	ROLE_OWNER: "$owner",
-	ROLE_ADMINISTRATOR: "administrator",
-
-	VISIBILITY_PRIVATE: "private",
-	VISIBILITY_PROTECTED: "protected",
-	VISIBILITY_PUBLIC: "public",
-	VISIBILITY_PUBLISHED: "published",
+	TASK_STATUS_BACKLOG: "backlog",
+	TASK_STATUS_WIP: "wip",
+	TASK_STATUS_REVIEW: "review",
+	TASK_STATUS_DONE: "done",
 
 	TOKEN_TYPE_VERIFICATION: "verification",
 	TOKEN_TYPE_PASSWORDLESS: "passwordless",
@@ -26,6 +19,12 @@ const C = {
 module.exports = {
 	...C,
 
+	USER_ROLES: [
+		C.USER_ROLE_ADMIN,
+		C.USER_ROLE_PM,
+		C.USER_ROLE_EMPLOYEE
+	],
+
 	TOKEN_TYPES: [
 		C.TOKEN_TYPE_VERIFICATION,
 		C.TOKEN_TYPE_PASSWORDLESS,
@@ -33,9 +32,10 @@ module.exports = {
 		C.TOKEN_TYPE_API_KEY
 	],
 
-	DEFAULT_LABELS: [
-		{ id: 1, name: "Low priority", color: "#fad900" },
-		{ id: 2, name: "Medium priority", color: "#ff9f19" },
-		{ id: 3, name: "High priority", color: "#eb4646" }
-	]
+	TASK_STATUSES: [
+		C.TASK_STATUS_BACKLOG,
+		C.TASK_STATUS_WIP,
+		C.TASK_STATUS_REVIEW,
+		C.TASK_STATUS_DONE
+	],
 };

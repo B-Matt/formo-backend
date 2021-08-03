@@ -1,6 +1,7 @@
 "use strict";
 
 const _ = require('lodash');
+const C = require("../constants");
 const { MoleculerClientError } = require("moleculer").Errors;
 const DbService = require("../mixins/db.mixin");
 const CacheCleanerMixin = require("../mixins/cache.cleaner.mixin");
@@ -23,6 +24,7 @@ module.exports = {
 		rest: "/",
 		fields: [
 			"_id",
+			"status",
 			"name",
 			"description",
 			"assignee",
@@ -35,6 +37,7 @@ module.exports = {
 			"updatedAt"
 		],
 		entityValidator: {
+			status: { type: "enum", values: C.TASK_STATUSES, },
 			name: { type: "string", min: 2 },
 			description: { type: "string" },
 			assignee: { type: "string", optional: true },
@@ -96,6 +99,7 @@ module.exports = {
 				const isProjectExisting = await ctx.call("projects.isCreated", { id: entity.project });
 				if(!isProjectExisting) throw new MoleculerClientError("Provided project not found!", 404);
 
+				entity.status = C.TASK_STATUS_BACKLOG;
 				entity.name = entity.name || "";
 				entity.assignee = entity.assignee || "";
 				entity.dueDate = entity.dueDate || null;
@@ -393,7 +397,7 @@ module.exports = {
 			if(!task.assignee) return task;
 			task.assignee = await ctx.call("user.getBasicData", { id: task.assignee, throwIfNotExist: false });
 			return task;
-		}
+		},
 	},
 
 	/**
