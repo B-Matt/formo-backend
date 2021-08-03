@@ -159,25 +159,12 @@ module.exports = {
 		 * Returns Task entity from DB by provided ID.
 		 */
 		get: {
-			rest: "GET /tasks/:id",
+			rest: "GET /task/:id",
 			auth: "required",
 			async handler(ctx) {
 				const task = await this.getById(ctx.params.id);
 				if(!task) throw new MoleculerClientError("Task not found!", 404);
-				for(let i = 0, len = task.comments.length; i < len; i++) {
-					const comment = await ctx.call("task.comments.get", { id: task.comments[i], throwIfNotExist: false });
-					task.comments[i] =  _.pickBy(comment, (v, k) => {
-						return k == "author" || k == "text" || k == "updatedAt";
-					});
-				}
-
-				for(let i = 0, len = task.attachments.length; i < len; i++) {
-					task.attachments[i] = `${ctx.meta.url}upload/${task._id}/${task.attachments[i]}`;
-				}
-
-				if(!task.assignee) return task;
-				task.assignee = await ctx.call("user.getBasicData", { id: task.assignee, throwIfNotExist: false });
-				return task;
+				return await this.getTaskData(task, ctx);
 			}
 		},
 
@@ -185,7 +172,16 @@ module.exports = {
 		 * Returns list of Task entities inside DB.
 		 */
 		list: {
-			rest: "GET /tasks",
+			rest: "GET /tasks/:project",
+			auth: "required",
+			async handler(ctx) {
+				const tasks = await this.adapter.find({ query: { project: ctx.params.project } });
+				let idx = tasks.length;
+				while(idx--) {
+					tasks[idx] = await this.getTaskData(tasks[idx], ctx);
+				}
+				return tasks;
+			}
 		},
 
 		/**
@@ -368,6 +364,29 @@ module.exports = {
 			}
 			return { user };
 		},
+
+		/**
+		 * Populates tasks fields that need population.
+		 * @param {*} task 
+		 * @param {*} ctx 
+		 * @returns 
+		 */
+		async getTaskData(task, ctx) {
+			for(let i = 0, len = task.comments.length; i < len; i++) {
+				const comment = await ctx.call("task.comments.get", { id: task.comments[i], throwIfNotExist: false });
+				task.comments[i] =  _.pickBy(comment, (v, k) => {
+					return k == "author" || k == "text" || k == "updatedAt";
+				});
+			}
+
+			for(let i = 0, len = task.attachments.length; i < len; i++) {
+				task.attachments[i] = `${ctx.meta.url}upload/${task._id}/${task.attachments[i]}`;
+			}
+
+			if(!task.assignee) return task;
+			task.assignee = await ctx.call("user.getBasicData", { id: task.assignee, throwIfNotExist: false });
+			return task;
+		}
 	},
 
 	/**

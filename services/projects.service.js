@@ -177,16 +177,7 @@ module.exports = {
 
 				const project = await this.getById(ctx.params.id);
 				if(!project) throw new MoleculerClientError("Project not found!", 404);				
-				for(let i = 0, len = project.tasks.length; i < len; i++) {
-					const task = await ctx.call("tasks.get", { id: project.tasks[i], throwIfNotExist: false });
-					project.tasks[i] = _.pickBy(task, (v, k) => {
-						return k == "name" || k == "description" || k == "assignee" || k == "dueDate" || k == "priority";						
-					});
-				}
-				for(let i = 0, len = project.members.length; i < len; i++) {
-					project.members[i] = await ctx.call("user.getBasicData", { id: project.members[i] });
-				}
-				return project;
+				return await this.getProjectData(project, ctx);
 			}
 		},
 
@@ -194,7 +185,16 @@ module.exports = {
 		 * Returns list of Project entities inside DB.
 		 */
 		list: {
-			rest: "GET /projects",
+			rest: "GET /projects/:org",
+			auth: "required",
+			async handler(ctx) {
+				const projects = await this.adapter.find({ query: { organisation: ctx.params.org } });
+				let idx = projects.length;
+				while(idx--) {
+					projects[idx] = await this.getProjectData(projects[idx], ctx);
+				}
+				return projects;
+			}
 		},
 
 		/**
@@ -296,6 +296,25 @@ module.exports = {
 		async transformEntity(entity) {
 			return entity || null;
 		},
+
+		/**
+		 * Populates projects fields that need population.
+		 * @param {*} project 
+		 * @param {*} ctx 
+		 * @returns 
+		 */
+		async getProjectData(project, ctx) {
+			for(let i = 0, len = project.tasks.length; i < len; i++) {
+				const task = await ctx.call("tasks.get", { id: project.tasks[i], throwIfNotExist: false });
+				project.tasks[i] = _.pickBy(task, (v, k) => {
+					return k == "name" || k == "description" || k == "assignee" || k == "dueDate" || k == "priority";						
+				});
+			}
+			for(let i = 0, len = project.members.length; i < len; i++) {
+				project.members[i] = await ctx.call("user.getBasicData", { id: project.members[i] });
+			}
+			return project;
+		}
 	},
 
 	/**
