@@ -135,7 +135,7 @@ module.exports = {
 					throw new MoleculerClientError("Invalid role ID", 400);
 				}
 
-				user.fristName = user.fistName || "";
+				user.firstName = user.fistName || "";
 				user.lastName = user.lastName || "";
 				user.password = bcrypt.hashSync(user.password, 10);
 				user.role = user.role || "admin";
@@ -278,9 +278,10 @@ module.exports = {
 			auth: "required",
 			async handler(ctx) {
 				if(ctx.meta.user._id != ctx.params.id) throw new MoleculerClientError("Not allowed!", 405);
-
 				const user = await this.getById(ctx.params.id);
-				this.broker.emit('user.removed', { user: user._id, org: user.organisation });
+				if(!user) throw new MoleculerClientError("User not found!", 404);
+
+				this.broker.emit('user.removed', { user: user._id, org: user.organisation, oldNick: `${user.firstName} ${user.lastName}` });
 				this.adapter.removeById(ctx.params.id);
 				return 'User deleted!';
 			}

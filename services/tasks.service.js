@@ -108,10 +108,12 @@ module.exports = {
 
 				const doc = await this.adapter.insert(entity);
 				this.broker.emit('task.created', { project: entity.project, task: doc._id, user: entity.assignee });
-				let json = await this.transformDocuments(ctx, {}, doc);
-				json = await this.transformEntity(entity);
-				await this.entityChanged("created", json, ctx);
-				return json;
+
+				const project = await ctx.call("projects.get", { id: doc.project, throwIfNotExist: false });
+				doc.project =  _.pickBy(project, (v, k) => {
+					return k == "name" || k == "organisation" || k == "budget";
+				});
+				return await this.getTaskData(doc, ctx);
 			},
 		},
 
@@ -148,10 +150,11 @@ module.exports = {
 				if (!task) throw new MoleculerClientError("Task not found!", 404);
 
 				const doc = await this.adapter.updateById(ctx.params.id, { $set: newData });
-				const entity = await this.transformDocuments(ctx, {}, doc);
-				const json = await this.transformEntity(entity);
-				this.entityChanged("updated", json, ctx);
-				return json;
+				const project = await ctx.call("projects.get", { id: doc.project, throwIfNotExist: false });
+				doc.project =  _.pickBy(project, (v, k) => {
+					return k == "name" || k == "organisation" || k == "budget";
+				});
+				return await this.getTaskData(doc, ctx);
 			},
 		},
 
@@ -221,10 +224,12 @@ module.exports = {
 				task.updatedAt = new Date();
 
 				const doc = await this.adapter.updateById(task._id, { "$set": task });
-				const transDoc = await this.transformDocuments(ctx, {}, doc);
-				const json = await this.transformEntity(transDoc, true, ctx.meta.token);
-				await this.entityChanged("updated", json, ctx);
-				return json;
+				const project = await ctx.call("projects.get", { id: doc.project, throwIfNotExist: false });
+
+				doc.project =  _.pickBy(project, (v, k) => {
+					return k == "name" || k == "organisation" || k == "budget";
+				});
+				return await this.getTaskData(doc, ctx);
 			}
 		},
 
@@ -247,10 +252,12 @@ module.exports = {
 				task.updatedAt = new Date();
 
 				const doc = await this.adapter.updateById(task._id, { "$set": task });
-				const transDoc = await this.transformDocuments(ctx, {}, doc);
-				const json = await this.transformEntity(transDoc, true, ctx.meta.token);
-				await this.entityChanged("updated", json, ctx);
-				return json;
+				const project = await ctx.call("projects.get", { id: doc.project, throwIfNotExist: false });
+
+				doc.project =  _.pickBy(project, (v, k) => {
+					return k == "name" || k == "organisation" || k == "budget";
+				});
+				return await this.getTaskData(doc, ctx);
 			}
 		},
 

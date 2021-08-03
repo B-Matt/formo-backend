@@ -19,7 +19,7 @@ module.exports = {
 	/**
 	 * Settings
 	 */
-     settings: {
+    settings: {
 		rest: "/",
 		fields: [
 			"_id",
@@ -150,7 +150,8 @@ module.exports = {
 
 				const comment = await this.getById(ctx.params.id);
 				if(!comment) throw new MoleculerClientError("Task comment not found!", 404);
-				comment.author = await ctx.call("user.getBasicData", { id: comment.author, throwIfNotExist: false });
+				const author = await ctx.call("user.getBasicData", { id: comment.author, throwIfNotExist: false });
+				if(author) comment.author = author;
 				return comment;
 			}
 		},
@@ -188,6 +189,20 @@ module.exports = {
 				let idx = comments.length;
 				while(idx--) {
 					this.adapter.removeById(comments[idx]._id);
+				}
+			}
+		},
+
+		"user.removed": {
+			async handler(payload) {
+				if(!payload) return;
+				const comments = await this.adapter.find({ query: { author: payload.user } });
+				if (!comments) return;
+
+				let idx = comments.length;
+				while(idx--) {
+					comments[idx].author = payload.oldNick;
+					this.adapter.updateById(comments[idx]._id, { "$set": comments[idx] });
 				}
 			}
 		},

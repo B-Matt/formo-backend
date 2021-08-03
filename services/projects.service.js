@@ -106,11 +106,7 @@ module.exports = {
 				entity.updatedAt = new Date();
 
 				const doc = await this.adapter.insert(entity);
-				this.broker.emit('project.created', { org: entity.organisation, project: doc._id, user: ctx.meta.user._id });
-				let json = await this.transformDocuments(ctx, {}, doc);
-				json = await this.transformEntity(entity);
-				await this.entityChanged("created", json, ctx);
-				return json;
+				return await this.getProjectData(doc, ctx);
 			},
 		},
 
@@ -156,10 +152,7 @@ module.exports = {
 				if (!proj) throw new MoleculerClientError("Project not found!", 404);
 
 				const doc = await this.adapter.updateById(ctx.params.id, { $set: newData });
-				const entity = await this.transformDocuments(ctx, {}, doc);
-				const json = await this.transformEntity(entity);
-				this.entityChanged("updated", json, ctx);
-				return json;
+				return await this.getProjectData(doc, ctx);
 			},
 		},
 

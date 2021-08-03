@@ -81,11 +81,7 @@ module.exports = {
 				entity.updatedAt = new Date();
 
 				const doc = await this.adapter.insert(entity);
-				let json = await this.transformDocuments(ctx, {}, doc);
-				json = await this.transformEntity(entity);
-				json['_id'] = doc._id;
-				await this.entityChanged("created", json, ctx);
-				return json;
+				return await this.getOrganisationData(doc, ctx);
 			}
 		},
 
@@ -123,10 +119,7 @@ module.exports = {
 				newData.updatedAt = new Date();
 
 				const doc = await this.adapter.updateById(ctx.params.id, { "$set": newData });
-				const entity = await this.transformDocuments(ctx, {}, doc);
-				const json = await this.transformEntity(entity);
-				this.entityChanged("updated", json, ctx);
-				return json;
+				return await this.getOrganisationData(doc, ctx);
 			}
 		},
 
@@ -138,19 +131,8 @@ module.exports = {
 			auth: "required",
 			async handler(ctx) {
 				const org = await this.adapter.findOne({ "_id": ctx.params.id });
-				
-				let membersIdx = org.members.length;
-				while(membersIdx--) {
-					org.members[membersIdx] = await ctx.call("user.getBasicData", { id: org.members[membersIdx] });
-				}
-
-				for(let i = 0, len = org.projects.length; i < len; i++) {
-					const project = await ctx.call("projects.get", { id: org.projects[i] });
-					org.projects[i] = _.pickBy(project, (v, k) => {
-						return k == "name" || k == "budget";
-					});
-				}
-				return org;
+				if(!org) throw new MoleculerClientError("Organisation not found!", 404);				
+				return await this.getOrganisationData(org, ctx);
 			}
 		},
 
@@ -211,7 +193,8 @@ module.exports = {
 				org.updatedAt = new Date();
 
 				this.broker.emit('user.orgAdded', ctx.params.organisation);
-				return await this.adapter.updateById(ctx.params.organisation.id, { "$set": org });
+				const doc = await this.adapter.updateById(ctx.params.organisation.id, { "$set": org });
+				return await this.getOrganisationData(doc, ctx);
 			}
 		},
 
@@ -237,7 +220,8 @@ module.exports = {
 
 				org.members = org.members.filter(m => m != ctx.params.organisation.user);
 				org.updatedAt = new Date();
-				return await this.adapter.updateById(ctx.params.organisation.id, { "$set": org });
+				const doc = await this.adapter.updateById(ctx.params.organisation.id, { "$set": org });
+				return await this.getOrganisationData(doc, ctx);
 			}
 		},
 
@@ -316,6 +300,27 @@ module.exports = {
 		 */
 		async transformEntity(entity) {
 			return entity || null;
+		},
+
+		/**
+		 * Populates projects fields that need population.
+		 * @param {*} org 
+		 * @param {*} ctx 
+		 * @returns 
+		 */
+		async getOrganisationData(org, ctx) {
+			let membersIdx = org.members.length;
+			while(membersIdx--) {
+				org.members[membersIdx] = await ctx.call("user.getBasicData", { id: org.members[membersIdx] });
+			}
+
+			for(let i = 0, len = org.projects.length; i < len; i++) {
+				const project = await ctx.call("projects.get", { id: org.projects[i] });
+				org.projects[i] = _.pickBy(project, (v, k) => {
+					return k == "name" || k == "budget";
+				});
+			}
+			return org;
 		}
 	},
 
