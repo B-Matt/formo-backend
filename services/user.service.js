@@ -172,7 +172,7 @@ module.exports = {
 					`
 				};
 
-				this.sendMail(ctx, json.user, mailText);
+				//this.sendMail(ctx, json.user, mailText);
 				return json;
 			}
 		},

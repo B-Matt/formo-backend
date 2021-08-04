@@ -37,7 +37,7 @@ module.exports = {
 			"updatedAt"
 		],
 		entityValidator: {
-			status: { type: "enum", values: C.TASK_STATUSES, },
+			status: { type: "enum", values: C.TASK_STATUSES, optional: true },
 			name: { type: "string", min: 2 },
 			description: { type: "string" },
 			assignee: { type: "string", optional: true },
@@ -74,6 +74,7 @@ module.exports = {
 				task: {
 					type: "object",
 					props: {
+						status: { type: "enum", values: C.TASK_STATUSES, optional: true },
 						name: { type: "string", min: 2 },
 						description: { type: "string" },
 						assignee: { type: "string", optional: true },

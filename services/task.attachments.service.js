@@ -7,9 +7,13 @@ const { MoleculerClientError } = require("moleculer").Errors;
 const mkdir = require("mkdirp").sync;
 const mime = require("mime-types");
 
+const imageCompress = require("../threads/image-compress");
+
 // Upload Directory
 const UPLOAD_DIR = path.join("./public", "attachments", "tasks");
 mkdir(UPLOAD_DIR);
+
+const imgExtensions = ['png', 'gif', 'jpg', 'jpeg', ]
 
 /**
  * @typedef {import('moleculer').Context} Context Moleculer's Context
@@ -35,34 +39,12 @@ module.exports = {
 			async handler(ctx) {
 				const isTaskExisting = await ctx.call("tasks.isCreated", { id: ctx.meta.fieldname });
 				if(!isTaskExisting) throw new MoleculerClientError("Provided task not found!", 404);
-
-				return new this.Promise((resolve, reject) => {
-					const taskDir = path.join(UPLOAD_DIR, ctx.meta.fieldname);
-					const fileName = this.randomName(ctx.meta.filename);
-					const filePath = path.join(taskDir, fileName);
-					const file = fs.createWriteStream(filePath);
-
-					if(!fs.existsSync(taskDir)) {
-						mkdir(taskDir);
-					}
-					
-					file.on("close", () => {
-						resolve({ filePath, meta: ctx.meta });
-					});
-
-					ctx.params.on("error", err => {
-						reject(err);
-						file.destroy(err);
-					});
-
-					file.on("error", (err) => {
-						reject(err);
-						fs.unlinkSync(filePath);
-					});
-
-					ctx.params.pipe(file);
-					this.broker.emit('task.attachment.uploaded', { task: ctx.meta.fieldname, file: fileName });
-				});
+				const data =  await this.saveFileToHost(ctx);
+				const fileExtension = mime.extension(mime.lookup(data.filePath));
+				if(imgExtensions.includes(fileExtension)) {
+					await imageCompress(data.filePath);
+				}
+				return { filePath: data.filePath, meta: data.meta }
 			}
 		},
 
@@ -109,9 +91,49 @@ module.exports = {
 	 * Methods
 	 */
 	methods: {
+		/**
+		 * Generates random file name.
+		 * @param {*} fileName 
+		 * @returns 
+		 */
 		randomName(fileName) {
 			const extension = mime.extension(mime.lookup(fileName));
 			return crypto.randomBytes(20).toString('hex') + `.${extension}`;
 		},
+
+		/**
+		 * Saves uploaded file to the disk.
+		 * @param {*} ctx 
+		 * @returns 
+		 */
+		saveFileToHost(ctx) {
+			return new Promise((resolve, reject) => {
+				const taskDir = path.join(UPLOAD_DIR, ctx.meta.fieldname);
+				const fileName = this.randomName(ctx.meta.filename);
+				const filePath = path.join(taskDir, fileName);
+				const file = fs.createWriteStream(filePath);
+
+				if(!fs.existsSync(taskDir)) {
+					mkdir(taskDir);
+				}
+				
+				file.on("close", async () => {
+					resolve({ filePath, file, meta: ctx.meta });
+				});
+
+				ctx.params.on("error", err => {
+					reject(err);
+					file.destroy(err);
+				});
+
+				file.on("error", (err) => {
+					reject(err);
+					fs.unlinkSync(filePath);
+				});
+
+				ctx.params.pipe(file);
+				this.broker.emit('task.attachment.uploaded', { task: ctx.meta.fieldname, file: fileName });
+			});
+		}
 	},
 };
