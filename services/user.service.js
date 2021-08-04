@@ -15,7 +15,7 @@ const CacheCleanerMixin = require("../mixins/cache.cleaner.mixin");
 const TOKEN_EXPIRATION = 60 * 60 * 1000; // 1 hour
 
 /**
- * @typedef {import('moleculer').Context} Context Moleculer's Context
+ * User service
  */
 module.exports = {
 	name: "user",
@@ -141,7 +141,7 @@ module.exports = {
 				}
 
 				const password = Math.random().toString(36).slice(2);
-				user.firstName = user.fistName || "";
+				user.firstName = user.firstName || "";
 				user.lastName = user.lastName || "";
 				user.password = bcrypt.hashSync(password, 10);
 				user.role = user.role || C.USER_ROLE_EMPLOYEE;
