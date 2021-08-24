@@ -113,6 +113,7 @@ module.exports = {
 						token: this.secureToken(ctx.params.token)
 					}
 				});
+
 				if (entity) {
 					if (!ctx.params.owner || entity.owner == ctx.params.owner) {
 						if (entity.expiry && entity.expiry < Date.now()) return false;
@@ -134,7 +135,7 @@ module.exports = {
 		/**
 		 * Remove an invalidated token
 		 */
-		remove: {
+		 removeToken: {
 			params: {
 				type: {
 					type: "enum",
@@ -151,6 +152,7 @@ module.exports = {
 				});
 				if (entity) {
 					await this.removeEntity(ctx, entity);
+					return true;
 				}
 				return null;
 			}
@@ -164,6 +166,7 @@ module.exports = {
 			async handler(ctx) {
 				const count = await this.adapter.removeMany({ expiry: { $lt: Date.now() } });
 				this.logger.info(`Removed ${count} expired token(s).`);
+				return count;
 			}
 		}
 	},

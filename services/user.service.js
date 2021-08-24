@@ -97,7 +97,7 @@ module.exports = {
 				org: { type: "object" },
 			},
 			async handler(ctx) {
-				await this.waitForServices(["organisations"]);
+				console.log('eee')
 				const user = ctx.params.user;
 
 				if(user.email) {
