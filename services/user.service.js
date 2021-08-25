@@ -90,14 +90,13 @@ module.exports = {
 		 *
 		 * @returns {Object} Created entity & token
 		 */
-		createAdmin: {
+		first: {
 			rest: "POST /user/first",
 			params: {
 				user: { type: "object" },
 				org: { type: "object" },
 			},
 			async handler(ctx) {
-				console.log('eee')
 				const user = ctx.params.user;
 
 				if(user.email) {
@@ -140,7 +139,7 @@ module.exports = {
 					if(isEmailExists) throw new MoleculerClientError("User with that e-mail already exists!", 422);
 				}
 
-				const password = Math.random().toString(36).slice(2);
+				const password = "123456"; //Math.random().toString(36).slice(2);
 				user.firstName = user.firstName || "";
 				user.lastName = user.lastName || "";
 				user.password = bcrypt.hashSync(password, 10);
@@ -205,11 +204,11 @@ module.exports = {
 			async handler(ctx) {
 				const data = ctx.params.user;
 				if(data.email) {
-					const foundUser = await this.adapter.findOne({ name: data.name });
+					const foundUser = await this.adapter.findOne({ email: data.email });
 					if(foundUser && foundUser._id.toString() !== ctx.meta.user._id.toString()) 
 						throw new MoleculerClientError("User with that e-mail already exists!", 422);
 				}
-				if(!this.validateRole(data.role)) {
+				if(data.role && !C.USER_ROLES.includes(data.role)) {
 					throw new MoleculerClientError("Invalid role ID", 400);
 				}
 
@@ -321,10 +320,15 @@ module.exports = {
 			},
 			rest: "POST /forgot-password",
 			async handler(ctx) {
-				const token = this.generateToken();
 				const email = ctx.params.email;
 				const user = await this.adapter.findOne({ email });
 				if (!user) throw new MoleculerClientError("Email is not registered.", 404);
+
+				const token = this.generateToken(
+					C.TOKEN_TYPE_PASSWORD_RESET,
+					user._id,
+					TOKEN_EXPIRATION
+				);
 
 				await this.adapter.updateById(user._id, {
 					$set: {
@@ -341,7 +345,7 @@ module.exports = {
 						Please click on the <a href="${ctx.meta.url}reset-password?token=${token}">link</a> to reset your password.
 					`
 				};
-				this.sendMail(ctx, user, mailText);
+				//this.sendMail(ctx, user, mailText);
 				return true;
 			}
 		},
@@ -428,7 +432,7 @@ module.exports = {
 	 */
 	events: {
 		"user.orgAdded": {
-			async handler(payload) {
+			async handler(payload) {				
 				if(!payload) return;
 				const user = await this.adapter.findOne({ "_id": payload.user });
 				if(!user) return;

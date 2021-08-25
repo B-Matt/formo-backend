@@ -37,7 +37,8 @@
     "moleculer-db-adapter-mongo": "^0.4.7",
     "moleculer-mail": "^1.2.5",
     "moleculer-web": "^0.9.1",
-    "nats": "^1.4.12"
+    "nats": "^1.4.12",
+    "supertest": "^6.1.6"
   },
   "engines": {
     "node": ">= 10.x.x"

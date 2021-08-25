@@ -1,6 +1,6 @@
 "use strict";
 
-const { ServiceBroker, Context } = require("moleculer");
+const { ServiceBroker } = require("moleculer");
 const { ValidationError } = require("moleculer").Errors;
 
 const TokensService = require("../../../services/tokens.service");

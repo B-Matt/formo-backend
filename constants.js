@@ -11,9 +11,7 @@ const C = {
 	TASK_STATUS_DONE: "done",
 
 	TOKEN_TYPE_VERIFICATION: "verification",
-	TOKEN_TYPE_PASSWORDLESS: "passwordless",
-	TOKEN_TYPE_PASSWORD_RESET: "password-reset",
-	TOKEN_TYPE_API_KEY: "api-key"
+	TOKEN_TYPE_PASSWORD_RESET: "password-reset"
 };
 
 module.exports = {
@@ -27,9 +25,7 @@ module.exports = {
 
 	TOKEN_TYPES: [
 		C.TOKEN_TYPE_VERIFICATION,
-		C.TOKEN_TYPE_PASSWORDLESS,
-		C.TOKEN_TYPE_PASSWORD_RESET,
-		C.TOKEN_TYPE_API_KEY
+		C.TOKEN_TYPE_PASSWORD_RESET
 	],
 
 	TASK_STATUSES: [

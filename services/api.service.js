@@ -146,8 +146,8 @@ module.exports = {
 
 		// Rate limiter
 		rateLimit: {
-			window: 10 * 1000,
-			limit: 10,
+			window: 2 * 1000,
+			limit: 30,
 			headers: true
 		},
 
