@@ -6,11 +6,11 @@ const request = require("supertest");
 const { ServiceBroker } = require("moleculer");
 
 // Load service schemas
-const APISchema = require("../../../services/api.service");
-const UsersSchema = require("../../../services/user.service");
-const OrganisationsSchema = require("../../../services/organisations.service");
-const TokensSchema = require("../../../services/tokens.service");
-const ProjectsSchema = require("../../../services/projects.service");
+const APISchema = require("../../services/api.service");
+const UsersSchema = require("../../services/user.service");
+const OrganisationsSchema = require("../../services/organisations.service");
+const TokensSchema = require("../../services/tokens.service");
+const ProjectsSchema = require("../../services/projects.service");
 
 describe("Test API Gateway endpoints", () => {
     let broker = new ServiceBroker({ logger: false });
