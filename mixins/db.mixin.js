@@ -2,6 +2,7 @@
 
 const fs = require("fs");
 const DbService	= require("moleculer-db");
+require('dotenv').config({ path: './.env' });
 
 /**
  * @typedef {import('moleculer').Context} Context Moleculer's Context
@@ -54,6 +55,7 @@ module.exports = function(collection) {
 		}
 	};
 
+	console.log(process.env.MONGO_URI);
 	if (process.env.MONGO_URI) {
 		// Mongo adapter
 		const MongoAdapter = require("moleculer-db-adapter-mongo");
