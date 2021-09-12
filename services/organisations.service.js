@@ -255,7 +255,7 @@ module.exports = {
 		"user.removed": {
 			async handler(payload) {
 				if(!payload) return;
-				const org = await thawait this.adapter.findById(payload.org);;
+				const org = await this this.adapter.findById(payload.org);;
 				if(!org) return;
 
 				org.members = org.members.filter(m => m != payload.user);
@@ -267,7 +267,7 @@ module.exports = {
 		"project.created": {
 			async handler(payload) {
 				if(!payload) return;
-				const org = await thawait this.adapter.findById(payload.org);;
+				const org = await this this.adapter.findById(payload.org);;
 				if(!org) return;
 				
 				org.projects.push(payload.project);
@@ -279,7 +279,7 @@ module.exports = {
 		"project.removed": {
 			async handler(payload) {
 				if(!payload || !payload.org) return;
-				const org = await thawait this.adapter.findById(payload.org);;
+				const org = await this this.adapter.findById(payload.org);;
 				if(!org) return;
 				
 				org.projects = org.projects.filter(p => p != payload.project);
