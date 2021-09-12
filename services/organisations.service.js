@@ -185,6 +185,7 @@ module.exports = {
 			},
 			async handler(ctx) {
 				const org = await this.adapter.findOne({ "_id": ctx.params.organisation.id });
+				console.log('eee', ctx.params.organisation.id, org)
 				if(!org) throw new MoleculerClientError("Organisation not found!", 404);
 				if(org.members.indexOf(ctx.params.organisation.user) != -1) throw new MoleculerClientError("User is already member of this organisation!", 409);
 
