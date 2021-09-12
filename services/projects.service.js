@@ -219,7 +219,7 @@ module.exports = {
 		isCreated: {
 			rest: "GET /projects/check/:id",
 			async handler(ctx) {
-				return await this.adapter.findOne({ "_id": ctx.params.id });
+				return await this.adapter.findById(ctx.params.id);
 			}
 		},
 	},
@@ -243,7 +243,7 @@ module.exports = {
 		"task.created": {
 			async handler(payload) {
 				if(!payload) return;
-				const project = await this.adapter.findOne({ "_id": payload.project });
+				const project = await this.adapter.findById(payload.project);
 				if(!project) return;
 
 				project.tasks.push(payload.task);
@@ -255,7 +255,7 @@ module.exports = {
 		"task.removed": {
 			async handler(payload) {
 				if(!payload) return;
-				const project = await this.adapter.findOne({ "_id": payload.project });
+				const project = await await this.adapter.findById(payload.project);
 				if(!project) return;
 
 				project.tasks = project.tasks.filter(t => t != payload.task);

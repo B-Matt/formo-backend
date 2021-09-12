@@ -272,7 +272,7 @@ module.exports = {
 		isCreated: {
 			rest: "GET /tasks/check/:id",
 			async handler(ctx) {
-				return await this.adapter.findOne({ "_id": ctx.params.id });
+				return await this.adapter.findById(ctx.params.id);
 			}
 		},
 	},

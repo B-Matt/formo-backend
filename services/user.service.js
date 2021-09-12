@@ -408,7 +408,7 @@ module.exports = {
 		isCreated: {
 			rest: "GET /user/check/:id",
 			async handler(ctx) {
-				return await this.adapter.findOne({ "_id": ctx.params.id });
+				return await this.adapter.findById(ctx.params.id);
 			}
 		},
 
@@ -434,7 +434,7 @@ module.exports = {
 		"user.orgAdded": {
 			async handler(payload) {				
 				if(!payload) return;
-				const user = await this.adapter.findOne({ "_id": payload.user });
+				const user = await this.adapter.findById(payload.user);
 				if(!user) return;
 
 				user.organisation = payload.id;
@@ -445,7 +445,7 @@ module.exports = {
 		"project.created": {
 			async handler(payload) {
 				if(!payload) return;
-				const user = await this.adapter.findOne({ "_id": payload.user });
+				const user = await this.adapter.findById(payload.user);
 				if(!user) return;
 				
 				user.projects.push(payload.project);
@@ -537,7 +537,7 @@ module.exports = {
 		 */
 		async checkIsAuthorized(id, actionRoles) {
 			const roles = actionRoles.split('|');
-			const user = await this.adapter.findOne({ "_id": id });
+			const user = await this.adapter.findById(id);
 			if(!user) return;
 
 			let isAuthorized = false;

@@ -110,7 +110,7 @@ module.exports = {
 			},
 			async handler(ctx) {
 				const newData = ctx.params.organisation;
-				const org = await this.adapter.findOne({ "_id": ctx.params.id });
+				const org = await await this.adapter.findById(ctx.params.id);
 				if(!org) throw new MoleculerClientError("Organisation not found!", 404);
 				
 				const isAuthorized = await ctx.call("user.isAuthorized", { id: ctx.meta.user._id, actionRank: "admin" });
@@ -129,7 +129,7 @@ module.exports = {
 			rest: "GET /organisations/:id",
 			auth: "required",
 			async handler(ctx) {
-				const org = await this.adapter.findOne({ "_id": ctx.params.id });
+				const org = await await this.adapter.findById(ctx.params.id);
 				if(!org) throw new MoleculerClientError("Organisation not found!", 404);				
 				return await this.getOrganisationData(org, ctx);
 			}
@@ -141,7 +141,7 @@ module.exports = {
 		isCreated: {
 			rest: "GET /organisations/check/:id",
 			async handler(ctx) {
-				return await this.adapter.findOne({ "_id": ctx.params.id });
+				return await await this.adapter.findById(ctx.params.id);
 			}
 		},
 
@@ -186,7 +186,6 @@ module.exports = {
 			async handler(ctx) {
 				const { id, user } = ctx.params.organisation;
 				const org = await this.adapter.findById(id);
-				console.log('eee', id, this.adapter, org)
 				if(!org) throw new MoleculerClientError("Organisation not found!", 404);
 				if(org.members.indexOf(user) != -1) throw new MoleculerClientError("User is already member of this organisation!", 409);
 
@@ -212,7 +211,7 @@ module.exports = {
 				} }
 			},
 			async handler(ctx) {
-				const org = await this.adapter.findOne({ "_id": ctx.params.organisation.id });
+				const org = await this.adapter.findById(ctx.params.organisation.id);
 				if(!org) throw new MoleculerClientError("Organisation not found!", 404);
 				if(org.members.indexOf(ctx.params.organisation.user) == -1) throw new MoleculerClientError("User is not member of this organisation!", 400);
 
@@ -235,7 +234,7 @@ module.exports = {
 			params: {
 			},
 			async handler(ctx) {
-				const org = await this.adapter.findOne({ "_id": ctx.params.id });
+				const org = await await this.adapter.findById(ctx.params.id);
 				if(!org) throw new MoleculerClientError("Organisation not found!", 404);
 
 				for(let i = 0, len = org.projects.length; i < len; i++) {
@@ -256,7 +255,7 @@ module.exports = {
 		"user.removed": {
 			async handler(payload) {
 				if(!payload) return;
-				const org = await this.adapter.findOne({ "_id": payload.org });
+				const org = await thawait this.adapter.findById(payload.org);;
 				if(!org) return;
 
 				org.members = org.members.filter(m => m != payload.user);
@@ -268,7 +267,7 @@ module.exports = {
 		"project.created": {
 			async handler(payload) {
 				if(!payload) return;
-				const org = await this.adapter.findOne({ "_id": payload.org });
+				const org = await thawait this.adapter.findById(payload.org);;
 				if(!org) return;
 				
 				org.projects.push(payload.project);
@@ -280,7 +279,7 @@ module.exports = {
 		"project.removed": {
 			async handler(payload) {
 				if(!payload || !payload.org) return;
-				const org = await this.adapter.findOne({ "_id": payload.org });
+				const org = await thawait this.adapter.findById(payload.org);;
 				if(!org) return;
 				
 				org.projects = org.projects.filter(p => p != payload.project);
