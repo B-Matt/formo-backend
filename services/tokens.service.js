@@ -135,7 +135,7 @@ module.exports = {
 		/**
 		 * Remove an invalidated token
 		 */
-		 removeToken: {
+		removeToken: {
 			params: {
 				type: {
 					type: "enum",
