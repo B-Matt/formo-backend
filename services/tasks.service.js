@@ -151,7 +151,7 @@ module.exports = {
 				const newData = ctx.params.task;
 				newData.updatedAt = new Date();
 
-				const task = await this.adapter.findOne({ _id: ctx.params.id });
+				const task = await this.adapter.findOne({ '_id': this.adapter.stringToObjectID(ctx.params.id) });
 				if (!task) throw new MoleculerClientError("Task not found!", 404);
 
 				const doc = await this.adapter.updateById(ctx.params.id, { $set: newData });
@@ -170,7 +170,7 @@ module.exports = {
 			rest: "GET /task/:id",
 			auth: "required",
 			async handler(ctx) {
-				const task = await this.adapter.findById(ctx.params.id);
+				const task = await this.adapter.findOne({ '_id': this.adapter.stringToObjectID(ctx.params.id) });
 				if(!task) throw new MoleculerClientError("Task not found!", 404);
 				return await this.getTaskData(task, ctx);
 			}
@@ -199,7 +199,7 @@ module.exports = {
 			rest: "DELETE /tasks/:id",
 			auth: "required",
 			async handler(ctx) {
-				const task = await this.adapter.findById(ctx.params.id);
+				const task = await this.adapter.findOne({ '_id': this.adapter.stringToObjectID(ctx.params.id) });
 				if(!task) throw new MoleculerClientError("Task not found!", 404);
 
 				const isAuthorized = await ctx.call("user.isAuthorized", { id: ctx.meta.user._id, actionRank: "admin|project_manager" });
@@ -222,7 +222,7 @@ module.exports = {
 				user: { type: "string", optional: true },
 			},
 			async handler(ctx) {
-				const task = await this.adapter.findById(ctx.params.id);
+				const task = await this.adapter.findOne({ '_id': this.adapter.stringToObjectID(ctx.params.id) });
 				if(!task) throw new MoleculerClientError("Task not found!", 404);
 
 				task.assignee = ctx.params.user;
@@ -249,7 +249,7 @@ module.exports = {
 				user: { type: "string", optional: true },
 			},
 			async handler(ctx) {
-				const task = await this.adapter.findById(ctx.params.id);
+				const task = await this.adapter.findOne({ '_id': this.adapter.stringToObjectID(ctx.params.id) });
 				if(!task) throw new MoleculerClientError("Task not found!", 404);
 				if(task.assignee != ctx.params.user) throw new MoleculerClientError("Task with provided user not found!", 404);
 
@@ -272,7 +272,7 @@ module.exports = {
 		isCreated: {
 			rest: "GET /tasks/check/:id",
 			async handler(ctx) {
-				return await this.adapter.findById(ctx.params.id);
+				return await this.adapter.findOne({ '_id': this.adapter.stringToObjectID(ctx.params.id) });
 			}
 		},
 	},
@@ -312,8 +312,7 @@ module.exports = {
 		"task.comment.created": {
 			async handler(payload) {
 				if(!payload) return;
-				console.log(payload)
-				const task = await this.adapter.findById(payload.task);
+				const task = await this.adapter.findOne({ '_id': this.adapter.stringToObjectID(payload.task) });
 				if (!task) return;
 
 				task.comments.push(payload.comment);
@@ -325,7 +324,7 @@ module.exports = {
 		"task.comment.removed": {
 			async handler(payload) {
 				if(!payload) return;
-				const task = await this.adapter.findById(payload.task);
+				const task = await this.adapter.findOne({ '_id': this.adapter.stringToObjectID(payload.task) });
 				if (!task) return;
 
 				task.comments = task.comments.filter(c => c != payload.comment);
@@ -337,7 +336,7 @@ module.exports = {
 		"task.attachment.uploaded": {
 			async handler(payload) {
 				if(!payload) return;
-				const task = await this.adapter.findById(payload.task);
+				const task = await this.adapter.findOne({ '_id': this.adapter.stringToObjectID(payload.task) });
 				if (!task) return;
 
 				task.attachments.push(payload.file);
@@ -349,7 +348,7 @@ module.exports = {
 		"task.attachment.removed": {
 			async handler(payload) {
 				if(!payload) return;
-				const task = await this.adapter.findById(payload.task);
+				const task = await this.adapter.findOne({ '_id': this.adapter.stringToObjectID(payload.task) });
 				console.log(payload, task);
 				if (!task) return;
 

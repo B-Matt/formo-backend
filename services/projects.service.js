@@ -152,7 +152,7 @@ module.exports = {
 				const newData = ctx.params.project;
 				newData.updatedAt = new Date();
 
-				const proj = await this.adapter.findOne({ _id: ctx.params.id });
+				const proj = await this.adapter.findOne({ '_id': this.adapter.stringToObjectID(ctx.params.id) });
 				if (!proj) throw new MoleculerClientError("Project not found!", 404);
 
 				const doc = await this.adapter.updateById(ctx.params.id, { $set: newData });
@@ -172,7 +172,7 @@ module.exports = {
 				const isAuthorized = await ctx.call("user.isAuthorized", { id: ctx.meta.user._id, actionRank: "admin|project_manager|employee" });
 				if(!isAuthorized) throw new MoleculerClientError("User with that role can't use this action.", 405);
 
-				const project = await this.adapter.findById(ctx.params.id);
+				const project = await this.adapter.findOne({ '_id': this.adapter.stringToObjectID(ctx.params.id) });
 				if(!project) throw new MoleculerClientError("Project not found!", 404);				
 				return await this.getProjectData(project, ctx);
 			}
@@ -204,7 +204,7 @@ module.exports = {
 				const isAuthorized = await ctx.call("user.isAuthorized", { id: ctx.meta.user._id, actionRank: "admin|project_manager" });
 				if(!isAuthorized) throw new MoleculerClientError("User with that role can't use this action.", 405);
 				
-				const project = await this.adapter.findById(ctx.params.id);
+				const project = await this.adapter.findOne({ '_id': this.adapter.stringToObjectID(ctx.params.id) });
 				if(!project) throw new MoleculerClientError("Project not found!", 404);
 	
 				this.broker.emit('project.removed', { project: project._id, org: project.organisation });
@@ -219,7 +219,7 @@ module.exports = {
 		isCreated: {
 			rest: "GET /projects/check/:id",
 			async handler(ctx) {
-				return await this.adapter.findById(ctx.params.id);
+				return await this.adapter.findOne({ '_id': this.adapter.stringToObjectID(ctx.params.id) });
 			}
 		},
 	},
@@ -243,7 +243,7 @@ module.exports = {
 		"task.created": {
 			async handler(payload) {
 				if(!payload) return;
-				const project = await this.adapter.findById(payload.project);
+				const project = await this.adapter.findOne({ '_id': this.adapter.stringToObjectID(payload.project) });
 				if(!project) return;
 
 				project.tasks.push(payload.task);
@@ -255,7 +255,7 @@ module.exports = {
 		"task.removed": {
 			async handler(payload) {
 				if(!payload) return;
-				const project = await await this.adapter.findById(payload.project);
+				const project = await this.adapter.findOne({ '_id': this.adapter.stringToObjectID(payload.project) });
 				if(!project) return;
 
 				project.tasks = project.tasks.filter(t => t != payload.task);

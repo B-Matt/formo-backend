@@ -240,7 +240,7 @@ module.exports = {
 				getOrg: { type: "boolean", optional: true }
 			},
 			async handler(ctx) {
-				const user = await this.adapter.findById(ctx.params.id);
+				const user = await this.adapter.findOne({ '_id': this.adapter.stringToObjectID(ctx.params.id) });
 				if(!user) {
 					throw new MoleculerClientError("User not found!", 404);
 				}
@@ -265,7 +265,7 @@ module.exports = {
 			rest: "GET /user/small/:id",
 			auth: "required",
 			async handler(ctx) {
-				const user = await this.adapter.findById(ctx.params.id);
+				const user = await this.adapter.findOne({ '_id': this.adapter.stringToObjectID(ctx.params.id) });
 				if(!user) throw new MoleculerClientError("User not found!", 404);
 				return _.pickBy(user, (v, k) => {
 					return k == "_id" || k == "firstName" || k == "lastName" || k == "role";
@@ -302,7 +302,7 @@ module.exports = {
 			auth: "required",
 			async handler(ctx) {
 				if(ctx.meta.user._id != ctx.params.id) throw new MoleculerClientError("Not allowed!", 405);
-				const user = await this.adapter.findById(ctx.params.id);
+				const user = await this.adapter.findOne({ '_id': this.adapter.stringToObjectID(ctx.params.id) });
 				if(!user) throw new MoleculerClientError("User not found!", 404);
 
 				this.broker.emit('user.removed', { user: user._id, org: user.organisation, oldNick: `${user.firstName} ${user.lastName}` });
@@ -398,7 +398,7 @@ module.exports = {
 						resolve(decoded);
 					});
 				});
-				if (decoded.id) return this.adapter.findById(decoded.id);
+				if (decoded.id) return this.adapter.findOne({ '_id': this.adapter.stringToObjectID(decoded.id) });
 			}
 		},
 
@@ -408,7 +408,7 @@ module.exports = {
 		isCreated: {
 			rest: "GET /user/check/:id",
 			async handler(ctx) {
-				return await this.adapter.findById(ctx.params.id);
+				return await this.adapter.findOne({ '_id': this.adapter.stringToObjectID(ctx.params.id) });
 			}
 		},
 
@@ -434,7 +434,7 @@ module.exports = {
 		"user.orgAdded": {
 			async handler(payload) {				
 				if(!payload) return;
-				const user = await this.adapter.findById(payload.user);
+				const user = await this.adapter.findOne({ '_id': this.adapter.stringToObjectID(payload.user) });
 				if(!user) return;
 
 				user.organisation = payload.id;
@@ -445,7 +445,7 @@ module.exports = {
 		"project.created": {
 			async handler(payload) {
 				if(!payload) return;
-				const user = await this.adapter.findById(payload.user);
+				const user = await this.adapter.findOne({ '_id': this.adapter.stringToObjectID(payload.user) });
 				if(!user) return;
 				
 				user.projects.push(payload.project);
@@ -525,7 +525,8 @@ module.exports = {
 		 * @param {*} organisation 
 		 * @returns 
 		 */
-		async getUserOrganisation(ctx, organisation) {
+		async getUserOrganisation(ctx, organisation) { //skoci
+			console.log('getorg', organisation)
 			const userOrg = await ctx.call("organisations.get", { id: organisation });
 			return _.pickBy(userOrg, (v, k) => {
 				return k == "name" || k == "address" || k == "city" || k == "country" || k == "_id";
@@ -537,7 +538,7 @@ module.exports = {
 		 */
 		async checkIsAuthorized(id, actionRoles) {
 			const roles = actionRoles.split('|');
-			const user = await this.adapter.findById(id);
+			const user = await this.adapter.findOne({ '_id': this.adapter.stringToObjectID(id) });
 			if(!user) return;
 
 			let isAuthorized = false;

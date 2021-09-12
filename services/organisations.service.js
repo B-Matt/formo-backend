@@ -129,7 +129,7 @@ module.exports = {
 			rest: "GET /organisations/:id",
 			auth: "required",
 			async handler(ctx) {
-				const org = await await this.adapter.findById(ctx.params.id);
+				const org = await this.adapter.findOne({ '_id': this.adapter.stringToObjectID(ctx.params.id) });
 				if(!org) throw new MoleculerClientError("Organisation not found!", 404);				
 				return await this.getOrganisationData(org, ctx);
 			}
@@ -311,7 +311,9 @@ module.exports = {
 		async getOrganisationData(org, ctx) {
 			let membersIdx = org.members.length;
 			while(membersIdx--) {
-				org.members[membersIdx] = await ctx.call("user.getBasicData", { id: org.members[membersIdx] });
+				if(org.members[membersIdx] != '') {
+					org.members[membersIdx] = await ctx.call("user.getBasicData", { id: org.members[membersIdx] });
+				}
 			}
 
 			for(let i = 0, len = org.projects.length; i < len; i++) {

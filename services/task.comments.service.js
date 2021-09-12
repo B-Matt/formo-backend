@@ -123,7 +123,7 @@ module.exports = {
 			},
 			async handler(ctx) {
 				const newData = ctx.params.comment;				
-				const comment = await this.adapter.findOne({ _id: ctx.params.id });
+				const comment = await this.adapter.findOne({ '_id': this.adapter.stringToObjectID(ctx.params.id) });
 				if (!comment) throw new MoleculerClientError("Task comment not found!", 404);
 
 				const isAuthorized = await ctx.call("user.isAuthorized", { id: ctx.meta.user._id, actionRank: "admin|project_manager" });
@@ -148,7 +148,7 @@ module.exports = {
 				const isAuthorized = await ctx.call("user.isAuthorized", { id: ctx.meta.user._id, actionRank: "admin|project_manager|employee" });
 				if(!isAuthorized) throw new MoleculerClientError("User with that role can't use this action.", 405);
 
-				const comment = await this.adapter.findById(ctx.params.id);
+				const comment = await this.adapter.findOne({ '_id': this.adapter.stringToObjectID(ctx.params.id) });
 				if(!comment) throw new MoleculerClientError("Task comment not found!", 404);
 				const author = await ctx.call("user.getBasicData", { id: comment.author, throwIfNotExist: false });
 				if(author) comment.author = author;
@@ -166,7 +166,7 @@ module.exports = {
 				const isAuthorized = await ctx.call("user.isAuthorized", { id: ctx.meta.user._id, actionRank: "admin|project_manager|employee" });
 				if(!isAuthorized) throw new MoleculerClientError("User with that role can't use this action.", 405);
 
-				const comment = await this.adapter.findById(ctx.params.id);
+				const comment = await this.adapter.findOne({ '_id': this.adapter.stringToObjectID(ctx.params.id) });
 				if(!comment) throw new MoleculerClientError("Task comment not found!", 404);
 
                 this.broker.emit('task.comment.removed', { comment: comment._id, task: comment.task });
