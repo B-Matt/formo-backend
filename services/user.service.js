@@ -139,7 +139,7 @@ module.exports = {
 					if(isEmailExists) throw new MoleculerClientError("User with that e-mail already exists!", 422);
 				}
 
-				const password = '123456'; //Math.random().toString(36).slice(2);
+				const password = 'testing123'; //Math.random().toString(36).slice(2);
 				user.firstName = user.firstName || "";
 				user.lastName = user.lastName || "";
 				user.password = bcrypt.hashSync(password, 10);
