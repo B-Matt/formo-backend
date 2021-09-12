@@ -240,7 +240,7 @@ module.exports = {
 				getOrg: { type: "boolean", optional: true }
 			},
 			async handler(ctx) {
-				const user = await this.getById(ctx.params.id);
+				const user = await this.adapter.findById(ctx.params.id);
 				if(!user) {
 					throw new MoleculerClientError("User not found!", 404);
 				}
@@ -265,7 +265,7 @@ module.exports = {
 			rest: "GET /user/small/:id",
 			auth: "required",
 			async handler(ctx) {
-				const user = await this.getById(ctx.params.id);
+				const user = await this.adapter.findById(ctx.params.id);
 				if(!user) throw new MoleculerClientError("User not found!", 404);
 				return _.pickBy(user, (v, k) => {
 					return k == "_id" || k == "firstName" || k == "lastName" || k == "role";
@@ -302,7 +302,7 @@ module.exports = {
 			auth: "required",
 			async handler(ctx) {
 				if(ctx.meta.user._id != ctx.params.id) throw new MoleculerClientError("Not allowed!", 405);
-				const user = await this.getById(ctx.params.id);
+				const user = await this.adapter.findById(ctx.params.id);
 				if(!user) throw new MoleculerClientError("User not found!", 404);
 
 				this.broker.emit('user.removed', { user: user._id, org: user.organisation, oldNick: `${user.firstName} ${user.lastName}` });
@@ -398,7 +398,7 @@ module.exports = {
 						resolve(decoded);
 					});
 				});
-				if (decoded.id) return this.getById(decoded.id);
+				if (decoded.id) return this.adapter.findById(decoded.id);
 			}
 		},
 

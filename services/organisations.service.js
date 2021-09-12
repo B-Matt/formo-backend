@@ -159,7 +159,7 @@ module.exports = {
 			auth: "required",
 			rest: "DELETE /organisations/:id",
 			async handler(ctx) {
-				const org = await this.getById(ctx.params.id);
+				const org = await this.adapter.findById(ctx.params.id);
 				if(!org) throw new MoleculerClientError("Organisation not found!", 404);
 
 				const isAuthorized = await ctx.call("user.isAuthorized", { id: ctx.meta.user._id, actionRank: "admin" });

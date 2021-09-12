@@ -172,7 +172,7 @@ module.exports = {
 				const isAuthorized = await ctx.call("user.isAuthorized", { id: ctx.meta.user._id, actionRank: "admin|project_manager|employee" });
 				if(!isAuthorized) throw new MoleculerClientError("User with that role can't use this action.", 405);
 
-				const project = await this.getById(ctx.params.id);
+				const project = await this.adapter.findById(ctx.params.id);
 				if(!project) throw new MoleculerClientError("Project not found!", 404);				
 				return await this.getProjectData(project, ctx);
 			}
@@ -204,7 +204,7 @@ module.exports = {
 				const isAuthorized = await ctx.call("user.isAuthorized", { id: ctx.meta.user._id, actionRank: "admin|project_manager" });
 				if(!isAuthorized) throw new MoleculerClientError("User with that role can't use this action.", 405);
 				
-				const project = await this.getById(ctx.params.id);
+				const project = await this.adapter.findById(ctx.params.id);
 				if(!project) throw new MoleculerClientError("Project not found!", 404);
 	
 				this.broker.emit('project.removed', { project: project._id, org: project.organisation });
