@@ -184,16 +184,17 @@ module.exports = {
 				} }
 			},
 			async handler(ctx) {
-				const org = await this.adapter.findOne({ "_id": ctx.params.organisation.id });
-				console.log('eee', ctx.params.organisation.id, org)
+				const { id, user } = ctx.params.organisation;
+				const org = await this.adapter.findOne({ id });
+				console.log('eee', id, this.adapter, org)
 				if(!org) throw new MoleculerClientError("Organisation not found!", 404);
-				if(org.members.indexOf(ctx.params.organisation.user) != -1) throw new MoleculerClientError("User is already member of this organisation!", 409);
+				if(org.members.indexOf(user) != -1) throw new MoleculerClientError("User is already member of this organisation!", 409);
 
-				org.members.push(ctx.params.organisation.user);
+				org.members.push(user);
 				org.updatedAt = new Date();
 
 				this.broker.emit('user.orgAdded', ctx.params.organisation);
-				const doc = await this.adapter.updateById(ctx.params.organisation.id, { "$set": org });
+				const doc = await this.adapter.updateById(id, { "$set": org });
 				return await this.getOrganisationData(doc, ctx);
 			}
 		},
