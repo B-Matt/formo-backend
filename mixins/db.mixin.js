@@ -55,13 +55,13 @@ module.exports = function(collection) {
 		}
 	};
 
-	console.log(process.env.MONGO_URI);
 	if (process.env.MONGO_URI) {
 		// Mongo adapter
 		const MongoAdapter = require("moleculer-db-adapter-mongo");
-
 		schema.adapter = new MongoAdapter(process.env.MONGO_URI);
 		schema.collection = collection;
+		console.log('aloo', collection)
+
 	} else if (process.env.NODE_ENV === 'test') {
 		// NeDB memory adapter for testing
 		schema.adapter = new DbService.MemoryAdapter();
