@@ -613,6 +613,7 @@
 						projects: [
 							{ id: "create", action: "projects.create", rest: "/api/projects/", method: "POST", object: "project", fields: [
 								{ field: "name", label: "Name", type: "string", paramType: "body", model: "projCreateName" },
+								{ field: "color", label: "Color", type: "string", paramType: "body", model: "projCreateColor" },
 								{ field: "organisation", label: "Org ID", type: "string", paramType: "body", model: "orgRemoveId" },
 								{ field: "budget", label: "Budget", type: "number", paramType: "body", model: "projCreateBudget" },
 								{ field: "jwt", label: "Token", type: "string", paramType: "auth", model: "authToken" }
@@ -740,6 +741,7 @@
 						// Project Create
 						projCreateName: "Testing",
 						projCreateBudget: 0,
+						projCreateColor: "#fff",
 
 						// Project Edit
 						projId: "",
