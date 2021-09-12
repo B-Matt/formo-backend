@@ -12,7 +12,7 @@ const CacheCleanerMixin = require("../mixins/cache.cleaner.mixin");
 module.exports = {
 	name: "task.comments",
 	mixins: [
-		DbService("task.comments"),
+		DbService("task-comments"),
 		CacheCleanerMixin(["cache.clean.task.comments"]),
 	],
 

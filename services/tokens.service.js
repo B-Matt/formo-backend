@@ -14,7 +14,7 @@ module.exports = {
 	name: "tokens",
 
 	mixins: [
-		DbService({ createActions: false }),
+		DbService("tokens"),
 		Cron
 	],
 
