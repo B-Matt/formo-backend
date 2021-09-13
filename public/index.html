@@ -623,7 +623,7 @@
 								{ field: "name", label: "Name", type: "string", paramType: "body", model: "projEditName" },
 								{ field: "jwt", label: "Token", type: "string", paramType: "auth", model: "authToken" }
 							], response: null, status: null, duration: null },
-							{ id: "list", action: "projects.list", rest: "/api/projects/:org", method: "GET", response: null, status: null, duration: null, fields: [
+							{ id: "list", action: "projects.list", rest: "/api/projects/list/:org", method: "GET", response: null, status: null, duration: null, fields: [
 								{ field: "org", label: "Org ID", type: "string", paramType: "url", model: "orgRemoveId" },
 								{ field: "jwt", label: "Token", type: "string", paramType: "auth", model: "authToken" }
 							] },

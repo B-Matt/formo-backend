@@ -182,7 +182,7 @@ module.exports = {
 		 * Returns list of Project entities inside DB.
 		 */
 		list: {
-			rest: "GET /projects/:org",
+			rest: "GET /projects/list/:org",
 			auth: "required",
 			async handler(ctx) {
 				const projects = await this.adapter.find({ query: { organisation: ctx.params.org } });
@@ -301,12 +301,12 @@ module.exports = {
 		 * @returns 
 		 */
 		async getProjectData(project, ctx) {
-			for(let i = 0, len = project.tasks.length; i < len; i++) {
+			/*for(let i = 0, len = project.tasks.length; i < len; i++) {
 				const task = await ctx.call("tasks.get", { id: project.tasks[i], throwIfNotExist: false });
 				project.tasks[i] = _.pickBy(task, (v, k) => {
 					return k == "name" || k == "description" || k == "assignee" || k == "dueDate" || k == "priority";						
 				});
-			}
+			}*/
 			for(let i = 0, len = project.members.length; i < len; i++) {
 				project.members[i] = await ctx.call("user.getBasicData", { id: project.members[i] });
 			}
