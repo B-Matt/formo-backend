@@ -13,7 +13,7 @@ const imageCompress = require("../threads/image-compress");
 const UPLOAD_DIR = path.join("./public", "attachments", "tasks");
 mkdir(UPLOAD_DIR);
 
-const imgExtensions = ['png', 'gif', 'jpg', 'jpeg', ]
+const imgExtensions = ["png", "gif", "jpg", "jpeg"];
 
 /**
  * @typedef {import('moleculer').Context} Context Moleculer's Context
@@ -37,16 +37,16 @@ module.exports = {
 
 		save: {
 			async handler(ctx) {
-				//const isTaskExisting = await ctx.call("tasks.isCreated", { id: ctx.meta.fieldname });
-				//if(!isTaskExisting) throw new MoleculerClientError("Provided task not found!", 404);
+				const isTaskExisting = await ctx.call("tasks.isCreated", { id: ctx.meta.fieldname });
+				if(!isTaskExisting) throw new MoleculerClientError("Provided task not found!", 404);
+
 				const data =  await this.saveFileToHost(ctx);
 				const fileExtension = mime.extension(mime.lookup(data.filePath));
+
 				if(imgExtensions.includes(fileExtension)) {
-					console.time('compress');
 					await imageCompress(data.filePath);
-					console.timeEnd('compress');
 				}
-				return { filePath: data.filePath, meta: data.meta }
+				return { filePath: data.filePath, meta: data.meta };
 			}
 		},
 

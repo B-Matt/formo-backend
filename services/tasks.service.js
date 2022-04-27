@@ -383,12 +383,12 @@ module.exports = {
 		 * @returns 
 		 */
 		async getTaskData(task, ctx) {
-			/*for(let i = 0, len = task.comments.length; i < len; i++) {
-				const comment = await ctx.call("task.comments.get", { id: task.comments[i], throwIfNotExist: false });
+			for(let i = 0, len = task.comments.length; i < len; i++) {
+				const comment = await ctx.call("task.comments.get", { id: new String(task.comments[i]).valueOf(), throwIfNotExist: false });
 				task.comments[i] =  _.pickBy(comment, (v, k) => {
 					return k == "author" || k == "text" || k == "updatedAt";
 				});
-			}*/
+			}
 
 			for(let i = 0, len = task.attachments.length; i < len; i++) {
 				task.attachments[i] = `${ctx.meta.url}upload/${task._id}/${task.attachments[i]}`;
