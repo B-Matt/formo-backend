@@ -222,6 +222,24 @@ module.exports = {
 				return await this.adapter.findOne({ '_id': this.adapter.stringToObjectID(ctx.params.id) });
 			}
 		},
+
+		/**
+		 * Returns list of Project entities that user assigned to. 
+		 */
+		getByUser: {
+			rest: "GET /projects/user/:id",
+			auth: "required",
+			params: {
+			},
+			async handler(ctx) {
+				const isAuthorized = await ctx.call("user.isAuthorized", { id: ctx.meta.user._id, actionRank: "admin|project_manager|employee" });
+				if(!isAuthorized) throw new MoleculerClientError("User with that role can't use this action.", 405);
+
+				const projects = await this.adapter.find({ "members": this.adapter.stringToObjectID(ctx.params.id) });
+				if(!projects) throw new MoleculerClientError("Projects with provided user not found!", 404);				
+				return projects;
+			}
+		},
 	},
 
 	/**

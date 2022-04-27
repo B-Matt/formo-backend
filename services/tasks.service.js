@@ -267,6 +267,19 @@ module.exports = {
 		},
 
 		/**
+		 * Lists tasks from provided user.
+		 */
+		getByUser: {
+			rest: "GET /task/user/:id",
+			auth: "required",
+			async handler(ctx) {
+				const tasks = await this.adapter.find({ "assignee": this.adapter.stringToObjectID(ctx.params.id) });
+				if(!tasks) throw new MoleculerClientError("Tasks with provided user not found!", 404);
+				return tasks;
+			}
+		},
+
+		/**
 		 * Used to check is provided task ID is valid.
 		 */
 		isCreated: {

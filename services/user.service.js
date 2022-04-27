@@ -248,12 +248,8 @@ module.exports = {
 					user.organisation = await this.getUserOrganisation(ctx, user.organisation);
 				}
 
-				for(let i = 0, len = user.projects.length; i < len; i++) {
-					const project = await ctx.call("projects.get", { id: user.projects[i] });
-					user.projects[i] = _.pickBy(project, (v, k) => {
-						return k == "name" || k == "budget" || k == "tasks";
-					});
-				}
+				user.projects = await this.getUserProjects(ctx, user);
+				user.tasks = await this.getUserTasks(ctx, user);
 				return user;
 			}
 		},
@@ -525,12 +521,43 @@ module.exports = {
 		 * @param {*} organisation 
 		 * @returns 
 		 */
-		async getUserOrganisation(ctx, organisation) { //skoci
-			console.log('getorg', organisation)
+		async getUserOrganisation(ctx, organisation) {
 			const userOrg = await ctx.call("organisations.get", { id: organisation });
 			return _.pickBy(userOrg, (v, k) => {
 				return k == "name" || k == "address" || k == "city" || k == "country" || k == "_id";
 			});
+		},
+
+		/**
+		 * Returns users projects with clean data.
+		 * @param {*} ctx 
+		 * @param {*} user 
+		 * @returns 
+		 */
+		async getUserProjects(ctx, user) {
+			let projects = await ctx.call("projects.getByUser", { id: user._id });
+			for (let i = 0; i < projects.length; i++) {
+				projects[i] = _.pickBy(projects[i], (v, k) => {
+					return k == "_id" || k == "name" || k == "color";
+				});
+			}
+			return projects;
+		},
+
+		/**
+		 * Returns users tasks with clean data.
+		 * @param {*} ctx 
+		 * @param {*} user 
+		 * @returns 
+		 */
+		async getUserTasks(ctx, user) {
+			let tasks = await ctx.call("tasks.getByUser", { id: user._id });
+			for (let i = 0; i < tasks.length; i++) {
+				tasks[i] = _.pickBy(tasks[i], (v, k) => {
+					return k == "_id" || k == "name" || k == "project" || k == "dueDate";
+				});
+			}
+			return tasks;
 		},
 
 		/**
